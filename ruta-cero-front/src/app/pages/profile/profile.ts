@@ -1,25 +1,28 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { Mapa } from '../mapa/mapa';
-import { PanelLateral } from '../panel-lateral/panel-lateral';
+import { Router } from '@angular/router';
 import { Store } from '../../services/store';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, Mapa, PanelLateral, RouterLink],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css'
+  imports: [CommonModule],
+  templateUrl: './profile.html',
+  styleUrl: './profile.css'
 })
-export class DashboardComponent {
+export class ProfileComponent {
   private store = inject(Store);
   private auth = inject(AuthService);
+  private router = inject(Router);
 
   usuario = this.store.usuario;
 
   cerrarSesion() {
     this.auth.logout();
+  }
+
+  irAlDashboard() {
+    this.router.navigate(['/dashboard']);
   }
 }

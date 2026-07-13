@@ -1,9 +1,23 @@
 <div class="dashboard-container">
-  <div class="map-area">
-    <app-mapa></app-mapa>
-  </div>
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <span class="logo">Ruta 0</span>
+    </div>
+    <div class="top-bar-right">
+      <a routerLink="/profile" class="user-info">
+        <span class="avatar-mini">{{ usuario()?.nombre?.charAt(0)?.toUpperCase() }}</span>
+        <span class="user-name">{{ usuario()?.nombre }}</span>
+      </a>
+      <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar sesión">Salir</button>
+    </div>
+  </header>
 
-  <div class="panel-area">
-    <app-panel-lateral></app-panel-lateral>
+  <div class="content">
+    <div class="map-area">
+      <app-mapa></app-mapa>
+    </div>
+    <div class="panel-area">
+      <app-panel-lateral></app-panel-lateral>
+    </div>
   </div>
 </div>

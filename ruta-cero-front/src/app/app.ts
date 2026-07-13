@@ -1,15 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DashboardComponent } from './components/dashboard/dashboard';
+import { Store } from './services/store';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, DashboardComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-// REVISA ESTA LÍNEA: Tiene que decir exactamente 'AppComponent'
-export class AppComponent { 
+export class AppComponent implements OnInit {
+  private store = inject(Store);
+
+  ngOnInit() {
+    this.store.restaurarSesion();
+  }
+
   title = 'ruta-cero-front';
 }

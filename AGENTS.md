@@ -33,12 +33,12 @@ There are no `lint` or `typecheck` scripts defined in either package.
 
 - `src/routes/chat.routes.js` — single POST `/api/chat` endpoint
 - `src/controllers/chat.controller.js` — "El Semáforo": classifies user intent, routes to SQL or Gemini
-- `src/services/ai.service.js` — Gemini 2.5 Flash with Google Search Grounding
+- `src/services/ai.service.js` — Gemini via `@google/genai` SDK (model: `gemini-flash-latest`) with Google Search Grounding
 - `src/repositories/db.js` — PostgreSQL connection pool (`pg`)
 - `src/repositories/etl.js` — OpenStreetMap → PostgreSQL ingestion pipeline
 - `src/repositories/setup.js` — DB schema bootstrap (drops + recreates table)
 
-Root-level `escaner.js` and `radar.js` are standalone utility scripts to discover available Gemini models.
+`ruta-cero-back/escaner.js` and `ruta-cero-back/radar.js` are standalone utility scripts to discover available Gemini models.
 
 ### Frontend: Angular SSR + Signals
 
@@ -92,6 +92,6 @@ Backend `.env` (not committed) requires:
 
 - Don't commit `.env` files (DB credentials + API keys)
 - Don't use `require()` — both packages use ES module imports
-- Don't hardcode Gemini model names without checking `escaner.js` output first
+- Don't hardcode specific Gemini model versions — use `gemini-flash-latest` alias in `ai.service.js` to avoid deprecation breakage
 - Don't let the `setup.js` schema script run in production (it drops the table)
 - Don't import Leaflet at module level — it needs the DOM and breaks SSR

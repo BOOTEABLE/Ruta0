@@ -1,0 +1,30 @@
+<div class="profile-page">
+  <div class="profile-card">
+    <button class="btn-volver" (click)="irAlDashboard()">← Volver al mapa</button>
+
+    <div class="profile-header">
+      <div class="avatar">{{ usuario()?.nombre?.charAt(0)?.toUpperCase() }}</div>
+      <h2>{{ usuario()?.nombre || 'Usuario' }}</h2>
+      <p class="email">{{ usuario()?.email || '—' }}</p>
+    </div>
+
+    <div class="profile-section">
+      <h3>Preferencias</h3>
+      <div class="chips" *ngIf="usuario()?.preferencias?.length; else sinPrefs">
+        <span class="chip" *ngFor="let pref of usuario()?.preferencias">{{ pref }}</span>
+      </div>
+      <ng-template #sinPrefs>
+        <p class="vacio">Aún no has seleccionado preferencias. Usa el chat para descubrir lugares y tus preferencias se ajustarán automáticamente.</p>
+      </ng-template>
+    </div>
+
+    <div class="profile-section">
+      <h3>Cuenta</h3>
+      <p class="info-line">📅 Miembro desde: {{ usuario()?.creado_en ? (usuario()?.creado_en | date:'mediumDate') : '—' }}</p>
+    </div>
+
+    <button class="btn-cerrar-sesion" (click)="cerrarSesion()">
+      Cerrar sesión
+    </button>
+  </div>
+</div>

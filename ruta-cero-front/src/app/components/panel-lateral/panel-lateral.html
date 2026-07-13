@@ -37,7 +37,7 @@
       <div class="input-chat">
         <input #chatInput type="text" placeholder="Ej: Tengo $20 y 3 horas..." (keydown.enter)="enviarMensaje(chatInput.value, chatInput); $event.preventDefault()">
         
-        <button type="button" class="btn-enviar" (click)="enviarMensaje(chatInput.value, chatInput)">Enviar</button>
+        <button type="button" class="btn-enviar" [disabled]="procesandoMensaje" (click)="enviarMensaje(chatInput.value, chatInput)">{{ procesandoMensaje ? '...' : 'Enviar' }}</button>
       </div>
     </div>
 

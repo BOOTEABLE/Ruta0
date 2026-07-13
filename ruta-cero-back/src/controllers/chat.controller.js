@@ -6,7 +6,7 @@ const clasificarIntencion = (mensaje) => {
     const texto = mensaje.toLowerCase();
     
     // 1. Palabras que SIEMPRE requieren análisis profundo o internet (Van a Gemini)
-    const palabrasComplejas = ['$', 'dólar', 'dolares', 'horas', 'tiempo', 'clima', 'llueve', 'lluvia', 'romántico', 'niños', 'mascota', 'recomienda', 'itinerario', 'plan', 'presupuesto'];
+    const palabrasComplejas = ['$', 'dólar', 'dolares', 'horas', 'tiempo', 'clima', 'llueve', 'lluvia', 'romántico', 'niños', 'mascota', 'recomienda', 'itinerario', 'plan', 'presupuesto', 'tardo', 'llego', 'distancia', 'camino', 'abierto', 'cerrado'];
     
     if (palabrasComplejas.some(pc => texto.includes(pc))) {
         return "GEMINI"; 
@@ -25,7 +25,7 @@ const clasificarIntencion = (mensaje) => {
 // ⚙️ EL ENRUTADOR (Controlador principal)
 export const enviarMensajeChat = async (req, res) => {
     try {
-        const { mensaje, lat, lng } = req.body;
+        const { mensaje, lat, lng, historial } = req.body;
         
         const intencion = clasificarIntencion(mensaje);
         console.log(`🚦 [Enrutador] Intención detectada: ${intencion}`);
@@ -82,7 +82,7 @@ export const enviarMensajeChat = async (req, res) => {
             // ==========================================
             // 🧠 VÍA INTELIGENTE (GEMINI) - Gasta Tokens
             // ==========================================
-            const respuestaIA = await procesarMensaje(mensaje, lat, lng);
+            const respuestaIA = await procesarMensaje(mensaje, lat, lng, historial);
             
             // 👇 NUEVO: Retornamos directamente lo que entrega la IA (que ya incluye respuesta y lugaresFisicos)
             return res.json(respuestaIA); 

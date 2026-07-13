@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core'; // <-- 1. Importamos OnInit
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Store } from '../../services/store';
+import { Store, Mensaje } from '../../services/store';
 import { LugaresService } from '../../services/lugares'; // Ajusta la ruta
 @Component({
   selector: 'app-panel-lateral',
@@ -52,17 +52,21 @@ export class PanelLateral implements OnInit { // <-- 2. Implementamos OnInit
     // Cerramos el candado
     this.procesandoMensaje = true;
 
+    // 👇 Guardamos una foto del historial ANTES de meter el mensaje nuevo,
+    // para mandarle al backend "lo que se dijo antes" sin duplicar el turno actual.
+    const historialPrevio = this.historial();
+
     this.historial.update(h => [...h, { emisor: 'usuario', texto }]);
     inputElement.value = ''; 
     
     // 👇 5. Envío INSTANTÁNEO usando las variables guardadas (0 esperas)
     console.log("🚀 Enviando mensaje al backend con tu ubicación guardada...");
-    this.llamarBackend(texto, this.miLatitud, this.miLongitud);
+    this.llamarBackend(texto, this.miLatitud, this.miLongitud, historialPrevio);
   }
 
   // Función auxiliar que se encarga de hablar con Node.js
-  llamarBackend(texto: string, lat: number | null, lng: number | null) {
-    const payload = { mensaje: texto, lat: lat, lng: lng };
+  llamarBackend(texto: string, lat: number | null, lng: number | null, historialPrevio: Mensaje[]) {
+    const payload = { mensaje: texto, lat: lat, lng: lng, historial: historialPrevio };
 
     this.http.post<any>('http://localhost:3000/api/chat', payload).subscribe({
       next: (res) => {

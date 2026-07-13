@@ -1,24 +1,92 @@
 .dashboard-container {
-  display: flex !important; /* Fuerza a que los componentes se pongan uno al lado del otro */
-  flex-direction: row !important;
+  display: flex;
+  flex-direction: column;
   width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  box-sizing: border-box;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  height: 52px;
+  background: #1976d2;
+  color: white;
+  flex-shrink: 0;
+  z-index: 2000;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.avatar-mini {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.user-name {
+  font-size: 0.9rem;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .map-area {
-  flex: 7; /* Ocupa el 70% de la pantalla */
-  height: 100vh;
+  flex: 7;
+  height: calc(100vh - 52px);
   position: relative;
-  background-color: #e5e3df; /* Color gris base por si el mapa tarda en cargar */
+  background-color: #e5e3df;
 }
 
 .panel-area {
-  flex: 3; /* Ocupa el 30% de la pantalla */
-  height: 100vh;
+  flex: 3;
+  height: calc(100vh - 52px);
   box-shadow: -3px 0 10px rgba(0,0,0,0.15);
   background-color: #ffffff;
   z-index: 1000;
