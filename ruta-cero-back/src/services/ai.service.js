@@ -1,31 +1,105 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { pool } from '../repositories/db.js';
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export const procesarMensaje = async (mensaje, lat, lng) => {
+// 👇 NUEVO: usamos el alias "-latest" en vez de fijar una versión concreta
+// (ej. "gemini-2.5-flash"). Google mueve el alias al modelo Flash vigente
+// automáticamente, así que cuando descontinúen la versión actual (como
+// pasó recién con 2.5) tu app sigue funcionando sin que tengas que salir
+// a cambiar código. Si tu materia pide que documentes qué versión exacta
+// usaste (para el benchmarking), imprime `response.modelVersion` una vez
+// y anótalo en el informe.
+const MODELO_GEMINI = "gemini-flash-lite-latest";
+
+// Cuántos turnos previos mandamos a Gemini. Sube/baja esto según cuánto
+// contexto necesite tu bot vs. cuántos tokens quieres pagar por request.
+const MAX_TURNOS_HISTORIAL = 6;
+
+const REGLAS_SISTEMA = `
+Eres un asistente turístico experto de Ruta0, para la ciudad de Quito.
+
+REGLAS ESTRICTAS:
+1. Recomienda ÚNICAMENTE los lugares de la base de datos local que se te inyecte en cada mensaje. No inventes lugares.
+2. Si el usuario pregunta si están abiertos, o quieres dar un buen servicio, USA TU HERRAMIENTA DE GOOGLE SEARCH para buscar los horarios reales de los lugares recomendados en internet.
+3. Si te preguntan por el clima actual, busca el clima de Quito en internet.
+4. Sé conciso y honesto. Si no encuentras el horario en internet, dile al usuario que no pudiste confirmarlo.
+5. Usa el historial de la conversación para entender referencias como "el segundo", "uno más barato" o "ese lugar", en vez de pedirle al usuario que repita todo.
+6. Al final de TU RESPUESTA, SIEMPRE agrega una línea nueva exactamente así:
+LUGARES_RECOMENDADOS: NombreExacto1, NombreExacto2, NombreExacto3
+   Usa ÚNICAMENTE los nombres tal cual aparecen en la BASE DE DATOS LOCAL,
+   separados por coma, solo los que de verdad mencionaste/recomendaste en
+   tu respuesta. Si no recomendaste ningún lugar puntual, escribe:
+   LUGARES_RECOMENDADOS: (ninguno)
+   Esta línea es para el sistema, el usuario no la ve — no la menciones
+   ni le expliques que existe.
+`;
+
+// 👇 NUEVO: separa el texto que sí ve el usuario de la línea
+// "LUGARES_RECOMENDADOS: ..." que agregamos por instrucción del sistema.
+// Con eso filtramos qué pines mostrar en el mapa, para que coincidan
+// exactamente con lo que el chat dice — ya no mandamos "los 30 más
+// cercanos" de regalo si Gemini solo recomendó 3.
+const separarRespuestaYRecomendados = (textoCompleto, lugaresDisponibles) => {
+    const match = textoCompleto.match(/LUGARES_RECOMENDADOS:\s*(.+)/i);
+
+    if (!match) {
+        // El modelo no siguió el formato esperado — no rompemos la app,
+        // devolvemos todo lo recuperado como antes (comportamiento seguro).
+        return { respuesta: textoCompleto.trim(), lugaresFisicos: lugaresDisponibles };
+    }
+
+    const respuestaLimpia = textoCompleto.slice(0, match.index).trim();
+    const nombresRecomendados = match[1]
+        .split(',')
+        .map(n => n.trim().toLowerCase())
+        .filter(n => n && n !== '(ninguno)');
+
+    if (nombresRecomendados.length === 0) {
+        return { respuesta: respuestaLimpia, lugaresFisicos: [] };
+    }
+
+    const lugaresFiltrados = lugaresDisponibles.filter(l =>
+        nombresRecomendados.includes(l.nombre.trim().toLowerCase())
+    );
+
+    return { respuesta: respuestaLimpia, lugaresFisicos: lugaresFiltrados };
+};
+
+// 👇 NUEVO (Opción B / RAG): la vía SQL ya no responde por su cuenta — solo
+// recupera datos. Si el router detectó una categoría explícita en el
+// mensaje (ej. "cafeterías"), filtramos la búsqueda a esa categoría para
+// una recuperación más precisa y un prompt más corto. Si no hay categoría
+// clara, hacemos la búsqueda general de siempre.
+export const procesarMensaje = async (mensaje, lat, lng, historial = [], categoria = null) => {
     try {
         let lugares = [];
+        const condicionCategoria = categoria ? 'AND categoria = $3' : '';
+        const parametrosCategoria = categoria ? [categoria] : [];
 
         // 1. Buscamos a un radio de 2km (2000 metros) usando PostGIS
         if (lat && lng) {
-            console.log(`📍 Buscando a 2km de: Lat ${lat}, Lng ${lng}...`);
+            console.log(`📍 Buscando a 2km de: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
             const query = `
                 SELECT * FROM lugares 
                 WHERE ST_DWithin(
                     ubicacion::geography, 
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
                     2000 
-                ) LIMIT 30; -- Limitamos a 30 para no saturar a la IA
+                ) ${condicionCategoria}
+                LIMIT 30; -- Limitamos a 30 para no saturar a la IA
             `;
-            const resultadoDB = await pool.query(query, [lng, lat]);
+            const resultadoDB = await pool.query(query, [lng, lat, ...parametrosCategoria]);
             lugares = resultadoDB.rows;
         } else {
             console.log("⚠️ No hay GPS. Buscando lugares aleatorios...");
-            const resultadoDB = await pool.query('SELECT * FROM lugares LIMIT 30;');
+            const query = categoria
+                ? 'SELECT * FROM lugares WHERE categoria = $1 LIMIT 30;'
+                : 'SELECT * FROM lugares LIMIT 30;';
+            const resultadoDB = await pool.query(query, parametrosCategoria);
             lugares = resultadoDB.rows;
         }
 
@@ -37,38 +111,55 @@ export const procesarMensaje = async (mensaje, lat, lng) => {
             ).join('\n');
         }
 
-        // 3. CAPA DE INTELIGENCIA: Gemini 2.5 Flash + Búsqueda en Internet
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash",
-            tools: [{ googleSearch: {} }] // ¡Encendemos el internet!
-        });
-
-        // 4. EL RELOJ: Para que sepa si un lugar está abierto AHORA
+        // 3. EL RELOJ: Para que sepa si un lugar está abierto AHORA
         const fechaActual = new Date().toLocaleString("es-EC", { timeZone: "America/Guayaquil" });
 
-        // 5. PROMPT MAESTRO (Ajustado a tu arquitectura)
-        const promptContexto = `
-Eres un asistente turístico experto de Ruta0.
+        // 4. MEMORIA DE CONVERSACIÓN: convertimos el historial que manda el
+        // frontend ({emisor, texto}) al formato que espera el SDK de Gemini
+        // ({role, parts}), y lo recortamos para no pagar tokens de más.
+        const historialRecortado = historial.slice(-MAX_TURNOS_HISTORIAL);
+        let historialGemini = historialRecortado.map(turno => ({
+            role: turno.emisor === 'usuario' ? 'user' : 'model',
+            parts: [{ text: turno.texto }]
+        }));
+
+        // El SDK exige que el historial empiece en role 'user'. Si el primer
+        // turno es del bot (ej. el saludo inicial que pone el frontend sin
+        // haber pasado por Gemini), lo descartamos junto con todo lo anterior
+        // al primer mensaje real del usuario.
+        const primerIndiceUsuario = historialGemini.findIndex(t => t.role === 'user');
+        historialGemini = primerIndiceUsuario === -1 ? [] : historialGemini.slice(primerIndiceUsuario);
+
+        // 👇 NUEVO SDK: ai.chats.create() en vez de model.startChat().
+        // Las reglas fijas y las tools (Google Search) van dentro de `config`.
+        const chat = ai.chats.create({
+            model: MODELO_GEMINI,
+            history: historialGemini,
+            config: {
+                systemInstruction: REGLAS_SISTEMA,
+                tools: [{ googleSearch: {} }], // ¡Encendemos el internet!
+            }
+        });
+
+        // 5. PROMPT DEL TURNO ACTUAL: solo lo que cambia mensaje a mensaje
+        // (la fecha y los lugares cercanos, que dependen del momento y del GPS).
+        const promptTurno = `
 Fecha y hora actual: ${fechaActual}.
 
 BASE DE DATOS LOCAL (Lugares a menos de 2km):
 ${lugaresTexto}
 
-REGLAS ESTRICTAS:
-1. Recomienda ÚNICAMENTE los lugares de la base de datos local de arriba. No inventes lugares.
-2. Si el usuario pregunta si están abiertos, o quieres dar un buen servicio, USA TU HERRAMIENTA DE GOOGLE SEARCH para buscar los horarios reales de los lugares recomendados en internet.
-3. Si te preguntan por el clima actual, busca el clima de Quito en internet.
-4. Sé conciso y honesto. Si no encuentras el horario en internet, dile al usuario que no pudiste confirmarlo.
-
 Mensaje del usuario: "${mensaje}"
         `;
 
-        console.log("🤖 Consultando a Gemini 2.5 Flash con Grounding...");
-        const result = await model.generateContent(promptContexto);
-        return { 
-            respuesta: result.response.text(),
-            lugaresFisicos: lugares 
-        };
+        console.log(`🤖 Consultando a Gemini (${MODELO_GEMINI}) con Grounding (historial: ${historialGemini.length} turnos)...`);
+        // 👇 NUEVO SDK: sendMessage recibe un objeto { message }, y la
+        // respuesta trae el texto directo en `.text` (no `.response.text()`).
+        const result = await chat.sendMessage({ message: promptTurno });
+
+        // 👇 NUEVO: separamos la respuesta visible de la lista de
+        // recomendados, y filtramos los pines del mapa con eso.
+        return separarRespuestaYRecomendados(result.text, lugares);
 
     } catch (error) {
         console.error("❌ Error en el servicio de IA:", error);

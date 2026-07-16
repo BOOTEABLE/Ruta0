@@ -39,6 +39,18 @@ export class Mapa implements OnInit {
   }
 
   private initMap(L: any): void {
+    // 👇 FIX: los íconos por defecto de Leaflet (el pin) se rompen bajo el
+    // empaquetador de Angular porque sus rutas de imagen son relativas al
+    // paquete de leaflet, no al build final. Angular no las resuelve, así
+    // que el navegador muestra el texto alt ("Marker") en vez del ícono.
+    // Solución: apuntar los íconos a un CDN, así siempre cargan.
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
     setTimeout(() => {
       // 1. Inicializamos el mapa centrado en Quito por defecto
       this.map = L.map('map').setView([-0.2201, -78.5123], 13);
