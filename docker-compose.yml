@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. BASE DE DATOS (PostGIS)
+  # ==========================================
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: rutacero-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin # Cámbiala si usabas otra clave en tu pgAdmin local
+      POSTGRES_DB: rutaZero_db 
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Aquí inyectamos tu respaldo de 7000 lugares al arrancar
+      - ./db-init:/docker-entrypoint-initdb.d/
+
+  # ==========================================
+  # 2. BACKEND (Node.js + Gemini)
+  # ==========================================
+  backend:
+    build: ./ruta-cero-back
+    container_name: rutacero-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=admin # Debe coincidir con la de arriba
+      - DB_HOST=db        # Conexión interna de Docker
+      - DB_PORT=5432
+      - DB_NAME=rutaZero_db
+    env_file:
+      - ./ruta-cero-back/.env # De aquí toma tu GEMINI_API_KEY de forma segura
+    depends_on:
+      - db
+
+  # ==========================================
+  # 3. FRONTEND (Angular + Nginx)
+  # ==========================================
+  frontend:
+    build: ./ruta-cero-front
+    container_name: rutacero-frontend
+    restart: always
+    ports:
+      # Mapeamos tu puerto 4200 de siempre al puerto 80 del Nginx interno
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
