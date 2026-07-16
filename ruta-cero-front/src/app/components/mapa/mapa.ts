@@ -29,11 +29,11 @@ export class Mapa implements OnInit {
   }
 
   ngOnInit(): void {
-    // Si estamos en el servidor, detenemos la ejecución para que no explote
     if (!this.isBrowser) return;
 
-    // Cargamos Leaflet dinámicamente solo si estamos en el navegador
-    import('leaflet').then((L) => {
+    import('leaflet').then((leafletModule) => {
+      // 👇 FIX: Extraemos el objeto real de la envoltura del módulo
+      const L = leafletModule.default || leafletModule;
       this.initMap(L);
     });
   }
@@ -92,12 +92,17 @@ export class Mapa implements OnInit {
     }, 400); 
   }
 
-  private actualizarMarcadores(lugares: any[]): void {
+private actualizarMarcadores(lugares: any[]): void {
     if (!this.map || !this.markersLayer) return;
 
-    import('leaflet').then((L) => {
+    import('leaflet').then((leafletModule) => {
+      // 👇 FIX: Lo mismo aquí para que pueda crear los marcadores
+      const L = leafletModule.default || leafletModule;
+      
       this.markersLayer.clearLayers();
       if (lugares.length === 0) return;
+      
+      // ... (aquí sigue el resto de tu código foreach intacto) ...
 
       lugares.forEach(lugar => {
         // 👇 Mejoramos el diseño del popup para incluir el horario

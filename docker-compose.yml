@@ -5,7 +5,7 @@ services:
   # 1. BASE DE DATOS (PostGIS)
   # ==========================================
   db:
-    image: postgis/postgis:15-3.3
+    image: postgis/postgis:latest
     container_name: rutacero-db
     restart: always
     environment:

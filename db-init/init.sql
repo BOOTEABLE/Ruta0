@@ -1,16 +1,12 @@
 --
 -- PostgreSQL database dump
 --
-
-\restrict nAy5RC8esmI7H41LKaO0YQRXWi9tW45aFMWZX6jzktGIIBuhLXjQEWMY8Z9mG8N
-
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
 -- Started on 2026-07-16 11:15:30
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -6860,6 +6856,4 @@ ALTER TABLE ONLY public.lugares
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict nAy5RC8esmI7H41LKaO0YQRXWi9tW45aFMWZX6jzktGIIBuhLXjQEWMY8Z9mG8N
 
