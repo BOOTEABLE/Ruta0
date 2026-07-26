@@ -98,29 +98,26 @@ export const procesarMensaje = async (mensaje, lat, lng, historial = [], categor
             : '';
         const parametrosCategoria = categoriaNormalizada ? [categoriaNormalizada] : [];
 
-        // 1. Buscamos a un radio de 5km (5000 metros) usando PostGIS
+        // 1. Buscamos los 5 lugares más cercanos usando KNN (PostGIS <-> operator)
         if (lat && lng) {
-            console.log(`📍 Buscando a 5km de: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
+            console.log(`📍 Buscando 5 lugares más cercanos a: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
             const query = `
                 SELECT * FROM lugares 
-                WHERE ST_DWithin(
-                    ubicacion::geography, 
-                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
-                    5000 
-                ) ${condicionCategoria}
-                LIMIT 30; -- Limitamos a 30 para no saturar a la IA
+                WHERE 1=1 ${condicionCategoria}
+                ORDER BY ubicacion::geography <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                LIMIT 5;
             `;
             const resultadoDB = await pool.query(query, [lng, lat, ...parametrosCategoria]);
             lugares = resultadoDB.rows;
-            console.log(`📊 Lugares encontrados en BD: ${lugares.length}`);
+            console.log(`📊 Lugares encontrados en BD (5 más cercanos): ${lugares.length}`);
         } else {
-            console.log("⚠️ No hay GPS. Buscando lugares aleatorios...");
+            console.log("⚠️ No hay GPS. Buscando 5 lugares por defecto...");
             const query = categoriaNormalizada
-                ? 'SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, \'á\', \'a\'), \'é\', \'e\'), \'í\', \'i\')) ILIKE lower($1) LIMIT 30;'
-                : 'SELECT * FROM lugares LIMIT 30;';
+                ? 'SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, \'á\', \'a\'), \'é\', \'e\'), \'í\', \'i\')) ILIKE lower($1) ORDER BY id ASC LIMIT 5;'
+                : 'SELECT * FROM lugares ORDER BY id ASC LIMIT 5;';
             const resultadoDB = await pool.query(query, parametrosCategoria);
             lugares = resultadoDB.rows;
-            console.log(`📊 Lugares encontrados en BD (sin GPS): ${lugares.length}`);
+            console.log(`📊 Lugares encontrados en BD (sin GPS, por defecto): ${lugares.length}`);
         }
 
         // 2. Formateamos los datos
