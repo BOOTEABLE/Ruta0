@@ -1,13 +1,14 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface Usuario {
   id: string;
   nombre: string;
   email: string;
-  rol: 'user' | 'admin';
+  rol?: 'user' | 'admin';
   preferencias?: {
     tema: 'light' | 'dark';
     tamanoFuente: 'normal' | 'grande' | 'extra-grande';
@@ -19,7 +20,7 @@ export interface Usuario {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private API = 'http://localhost:3000/api';
+  private API = environment.apiUrl;
 
   currentUser = signal<Usuario | null>(null);
   isAuthenticated = computed(() => !!this.currentUser());
@@ -31,7 +32,7 @@ export class AuthService {
 
   private cargarSesion() {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     const user = localStorage.getItem('user');
     if (token && user) {
       this.currentUser.set(JSON.parse(user));
@@ -41,7 +42,7 @@ export class AuthService {
   login(email: string, password: string) {
     return this.http.post<{ token: string; user: Usuario }>(`${this.API}/auth/login`, { email, password }).pipe(
       tap(res => {
-        localStorage.setItem('token', res.token);
+        localStorage.setItem('access_token', res.token);
         localStorage.setItem('user', JSON.stringify(res.user));
         this.currentUser.set(res.user);
       })
@@ -50,10 +51,13 @@ export class AuthService {
 
   registro(nombre: string, email: string, password: string, confirmarPassword: string) {
     return this.http.post<{ token: string; user: Usuario }>(`${this.API}/auth/register`, {
-      nombre, email, password, confirmarPassword
+      nombre,
+      email,
+      password,
+      confirmarPassword
     }).pipe(
       tap(res => {
-        localStorage.setItem('token', res.token);
+        localStorage.setItem('access_token', res.token);
         localStorage.setItem('user', JSON.stringify(res.user));
         this.currentUser.set(res.user);
       })
@@ -61,7 +65,7 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.currentUser.set(null);
     this.router.navigate(['/login']);
@@ -69,7 +73,7 @@ export class AuthService {
 
   getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
+    return localStorage.getItem('access_token');
   }
 
   actualizarUsuario(usuario: Usuario) {

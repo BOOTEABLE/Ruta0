@@ -12,22 +12,22 @@ export const authGuard: CanActivateFn = () => {
   return false;
 };
 
-export const adminGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  if (auth.isAuthenticated() && auth.isAdmin()) {
-    return true;
-  }
-  router.navigate(['/dashboard']);
-  return false;
-};
-
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (!auth.isAuthenticated()) {
     return true;
   }
-  router.navigate(['/dashboard']);
+  router.navigate(['/']);
+  return false;
+};
+
+export const adminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAuthenticated() && auth.isAdmin()) {
+    return true;
+  }
+  router.navigate(['/']);
   return false;
 };

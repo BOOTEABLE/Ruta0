@@ -1,74 +1,56 @@
-<div class="register-wrapper">
-  <div class="register-card">
-    <div class="register-header">
-      <div class="logo">
-        <span class="logo-ruta">Ruta</span><span class="logo-zero">0</span>
-      </div>
-      <p class="tagline">Crea tu cuenta y explora Quito</p>
-    </div>
+import { Component, signal, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
-    <form (ngSubmit)="registrar()" class="register-form" autocomplete="off">
-      <div class="form-group">
-        <label for="nombre">Nombre</label>
-        <input
-          id="nombre"
-          type="text"
-          placeholder="Tu nombre"
-          [value]="nombre()"
-          (input)="actualizarCampo('nombre', $event)"
-          autocomplete="name"
-        />
-      </div>
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './register.html',
+  styleUrl: './register.css'
+})
+export class RegisterComponent {
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="tu@email.com"
-          [value]="email()"
-          (input)="actualizarCampo('email', $event)"
-          autocomplete="email"
-        />
-      </div>
+  nombre = signal('');
+  email = signal('');
+  password = signal('');
+  confirmarPassword = signal('');
+  cargando = signal(false);
+  errores = signal<string[]>([]);
 
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          placeholder="Mínimo 6 caracteres"
-          [value]="password()"
-          (input)="actualizarCampo('password', $event)"
-          autocomplete="new-password"
-        />
-      </div>
+  actualizarCampo(campo: string, event: Event) {
+    const valor = (event.target as HTMLInputElement).value;
+    (this as any)[campo].set(valor);
+  }
 
-      <div class="form-group">
-        <label for="confirmarPassword">Confirmar Contraseña</label>
-        <input
-          id="confirmarPassword"
-          type="password"
-          placeholder="Repite tu contraseña"
-          [value]="confirmarPassword()"
-          (input)="actualizarCampo('confirmarPassword', $event)"
-          (keydown.enter)="registrar()"
-          autocomplete="new-password"
-        />
-      </div>
+  async registrar() {
+    this.errores.set([]);
+    this.cargando.set(true);
 
-      <div *ngIf="errores().length > 0" class="error-box">
-        <p *ngFor="let err of errores()">{{ err }}</p>
-      </div>
+    const errs: string[] = [];
+    if (!this.nombre().trim()) errs.push('El nombre es requerido');
+    if (!this.email().trim()) errs.push('El email es requerido');
+    if (!this.password()) errs.push('La contraseña es requerida');
+    if (this.password().length < 6) errs.push('La contraseña debe tener al menos 6 caracteres');
+    if (this.password() !== this.confirmarPassword()) errs.push('Las contraseñas no coinciden');
 
-      <button type="submit" class="btn-register" [disabled]="cargando()">
-        <span *ngIf="!cargando()">Crear Cuenta</span>
-        <span *ngIf="cargando()" class="spinner"></span>
-      </button>
-    </form>
+    if (errs.length > 0) {
+      this.errores.set(errs);
+      this.cargando.set(false);
+      return;
+    }
 
-    <div class="register-footer">
-      <p>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
-    </div>
-  </div>
-</div>
+    try {
+      await this.auth.registro(this.nombre().trim(), this.email().trim(), this.password(), this.confirmarPassword()).toPromise();
+      this.router.navigate(['/']);
+    } catch (error: any) {
+      this.errores.set([error.error?.error || 'Error al registrarse']);
+    } finally {
+      this.cargando.set(false);
+    }
+  }
+}

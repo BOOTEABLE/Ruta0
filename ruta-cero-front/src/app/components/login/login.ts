@@ -1,50 +1,50 @@
-<div class="login-wrapper">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="logo">
-        <span class="logo-ruta">Ruta</span><span class="logo-zero">0</span>
-      </div>
-      <p class="tagline">Tu guía turístico en Quito</p>
-    </div>
+import { Component, signal, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
-    <form (ngSubmit)="login()" class="login-form" autocomplete="off">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="tu@email.com"
-          [value]="email()"
-          (input)="actualizarEmail($event)"
-          autocomplete="email"
-        />
-      </div>
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './login.html',
+  styleUrl: './login.css'
+})
+export class LoginComponent {
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          [value]="password()"
-          (input)="actualizarPassword($event)"
-          (keydown.enter)="login()"
-          autocomplete="current-password"
-        />
-      </div>
+  email = signal('');
+  password = signal('');
+  cargando = signal(false);
+  errores = signal<string[]>([]);
 
-      <div *ngIf="errores().length > 0" class="error-box">
-        <p *ngFor="let err of errores()">{{ err }}</p>
-      </div>
+  actualizarEmail(event: Event) {
+    this.email.set((event.target as HTMLInputElement).value);
+  }
 
-      <button type="submit" class="btn-login" [disabled]="cargando()">
-        <span *ngIf="!cargando()">Iniciar Sesión</span>
-        <span *ngIf="cargando()" class="spinner"></span>
-      </button>
-    </form>
+  actualizarPassword(event: Event) {
+    this.password.set((event.target as HTMLInputElement).value);
+  }
 
-    <div class="login-footer">
-      <p>¿No tienes cuenta? <a routerLink="/register">Regístrate</a></p>
-    </div>
-  </div>
-</div>
+  async login() {
+    this.errores.set([]);
+    this.cargando.set(true);
+
+    if (!this.email().trim() || !this.password()) {
+      this.errores.set(['Email y contraseña son requeridos']);
+      this.cargando.set(false);
+      return;
+    }
+
+    try {
+      await this.auth.login(this.email().trim(), this.password()).toPromise();
+      this.router.navigate(['/']);
+    } catch (error: any) {
+      this.errores.set([error.error?.error || 'Error al iniciar sesión']);
+    } finally {
+      this.cargando.set(false);
+    }
+  }
+}

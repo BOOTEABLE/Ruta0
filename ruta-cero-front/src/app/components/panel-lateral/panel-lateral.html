@@ -2,6 +2,7 @@
   <div class="panel-header">
     <button (click)="cambiarVista('descubrir')" [class.active]="vista() === 'descubrir'">Descubrir</button>
     <button (click)="cambiarVista('chat')" [class.active]="vista() === 'chat'">Asistente IA</button>
+    <button class="btn-logout" (click)="logout()">🚪 Salir</button>
   </div>
 
   <div class="panel-content">

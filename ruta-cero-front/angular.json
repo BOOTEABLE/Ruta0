@@ -67,7 +67,8 @@
               "buildTarget": "ruta-cero-front:build:production"
             },
             "development": {
-              "buildTarget": "ruta-cero-front:build:development"
+              "buildTarget": "ruta-cero-front:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
