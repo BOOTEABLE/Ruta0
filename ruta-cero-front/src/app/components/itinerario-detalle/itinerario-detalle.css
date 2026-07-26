@@ -1,0 +1,168 @@
+.itinerario-detalle-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  min-height: 100vh;
+}
+
+.itinerario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.itinerario-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.itinerario-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #666);
+}
+
+.lugares-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lugar-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-tertiary, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.lugar-card:hover {
+  border-color: var(--accent-primary, #6366f1);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+}
+
+.lugar-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.lugar-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lugar-nombre {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary, #1a1a2e);
+  margin-bottom: 4px;
+}
+
+.lugar-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lugar-categoria {
+  font-size: 0.75rem;
+  color: var(--accent-primary, #6366f1);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lugar-precio {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+}
+
+.lugar-accion {
+  flex-shrink: 0;
+}
+
+.btn-ver-lugar {
+  padding: 10px 20px;
+  background: var(--accent-primary, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ver-lugar:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary, #666);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .itinerario-detalle-container {
+    padding: 16px 12px;
+  }
+  
+  .itinerario-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .itinerario-meta {
+    align-items: flex-start;
+  }
+  
+  .lugar-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .lugar-accion {
+    width: 100%;
+  }
+  
+  .btn-ver-lugar {
+    width: 100%;
+  }
+}

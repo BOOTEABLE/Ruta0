@@ -9,6 +9,7 @@ export interface Usuario {
   nombre: string;
   email: string;
   rol?: 'user' | 'admin';
+  onboardingCompletado?: boolean;
   preferencias?: {
     tema: 'light' | 'dark';
     tamanoFuente: 'normal' | 'grande' | 'extra-grande';
@@ -25,6 +26,7 @@ export class AuthService {
   currentUser = signal<Usuario | null>(null);
   isAuthenticated = computed(() => !!this.currentUser());
   isAdmin = computed(() => this.currentUser()?.rol === 'admin');
+  hasCompletedOnboarding = computed(() => !!this.currentUser()?.onboardingCompletado);
 
   constructor() {
     this.cargarSesion();
@@ -79,5 +81,22 @@ export class AuthService {
   actualizarUsuario(usuario: Usuario) {
     localStorage.setItem('user', JSON.stringify(usuario));
     this.currentUser.set(usuario);
+  }
+
+  actualizarPreferencias(prefs: { categoriasFavoritas: string[]; categoriasEvitadas: string[]; presupuestoMinimo?: string }) {
+    return this.http.put<{ preferencias: any }>(`${this.API}/perfil/preferencias`, prefs);
+  }
+
+  checkOnboardingStatus() {
+    return this.http.get<{ onboardingCompletado: boolean }>(`${this.API}/perfil/onboarding-status`);
+  }
+
+  completeOnboarding() {
+    return this.http.post<{ user: Usuario; onboardingCompletado: boolean }>(`${this.API}/perfil/onboarding-complete`, {}).pipe(
+      tap(res => {
+        this.currentUser.set(res.user);
+        localStorage.setItem('user', JSON.stringify(res.user));
+      })
+    );
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Store } from '../../services/store';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { PerfilService } from '../../services/perfil.service';
 
 @Component({
   selector: 'app-panel-lateral',
@@ -15,11 +16,14 @@ export class PanelLateral implements OnInit {
   private store = inject(Store);
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private perfil = inject(PerfilService);
 
   vista = this.store.vistaActual;
   lugarSeleccionado = this.store.lugarSeleccionado;
   historial = this.store.historialChat;
+  lugaresRecomendados = this.store.lugaresRecomendados;
   procesandoMensaje = false;
+  guardandoItinerario = false;
 
   miLatitud: number | null = null;
   miLongitud: number | null = null;
@@ -69,6 +73,11 @@ export class PanelLateral implements OnInit {
         const textoDelServidor = res?.respuesta || "Recibí los datos...";
         this.historial.update(h => [...h, { emisor: 'bot', texto: textoDelServidor }]);
 
+        // 👇 FIX: antes, cuando lugaresFisicos llegaba vacío ([]), este bloque
+        // no hacía nada — dejaba los pines de la pregunta ANTERIOR pegados
+        // en el mapa (pines fantasma), aunque la respuesta actual no tuviera
+        // nada que ver con esos lugares. El mapa debe reflejar SIEMPRE la
+        // última respuesta, así que sincronizamos incluso cuando es [].
         if (res.lugaresFisicos && res.lugaresFisicos.length > 0) {
           console.log("📍 ¡Sí llegaron los lugares! Enviando al Store...");
           // 👇 Conversión EXPLÍCITA a number para evitar type mismatch en el mapa
@@ -79,7 +88,8 @@ export class PanelLateral implements OnInit {
           }));
           this.store.lugaresRecomendados.set(lugaresConNumeros);
         } else {
-          console.warn("⚠️ Advertencia: lugaresFisicos llegó vacío o undefined");
+          console.log("📍 Esta respuesta no recomendó lugares — limpiando pines del mapa.");
+          this.store.lugaresRecomendados.set([]);
         }
 
         this.procesandoMensaje = false;
@@ -104,6 +114,26 @@ export class PanelLateral implements OnInit {
     this.store.lugaresRecomendados.set([ejemplo]);
     this.store.lugarSeleccionado.set(ejemplo);
     this.store.vistaActual.set('detalle');
+  }
+
+  async guardarItinerarioActual() {
+    const lugares = this.lugaresRecomendados();
+    if (!lugares || lugares.length === 0) return;
+
+    const nombre = prompt('¿Cómo quieres llamar a este itinerario?', 'Mi plan');
+    if (!nombre?.trim()) return;
+
+    this.guardandoItinerario = true;
+    try {
+      const lugaresIds = lugares.map(l => l.id).filter((id): id is number => id != null);
+      await this.perfil.guardarItinerario({ nombre: nombre.trim(), descripcion: null, lugaresIds }).toPromise();
+      alert('¡Itinerario guardado! Lo verás en tu perfil.');
+    } catch (err: any) {
+      console.error('Error guardando itinerario:', err);
+      alert(err.error?.error || 'Error al guardar el itinerario');
+    } finally {
+      this.guardandoItinerario = false;
+    }
   }
 
   formatearMensaje(texto: string): string {

@@ -35,10 +35,27 @@
         </div>
       </div>
       
+      @if (lugaresRecomendados().length > 0) {
+        <div class="guardar-itinerario-bar">
+          <span class="lugares-count">📍 {{ lugaresRecomendados().length }} lugares en la recomendación</span>
+          <button 
+            class="btn-guardar-itinerario" 
+            (click)="guardarItinerarioActual()"
+            [disabled]="guardandoItinerario"
+          >
+            @if (guardandoItinerario) {
+              <span class="spinner-sm"></span> Guardando...
+            } @else {
+              💾 Guardar itinerario
+            }
+          </button>
+        </div>
+      }
+      
       <div class="input-chat">
         <input #chatInput type="text" placeholder="Ej: Tengo $20 y 3 horas..." (keydown.enter)="enviarMensaje(chatInput.value, chatInput); $event.preventDefault()">
         
-        <button type="button" class="btn-enviar" (click)="enviarMensaje(chatInput.value, chatInput)">Enviar</button>
+        <button type="button" class="btn-enviar" (click)="enviarMensaje(chatInput.value, chatInput)" [disabled]="procesandoMensaje">Enviar</button>
       </div>
     </div>
 

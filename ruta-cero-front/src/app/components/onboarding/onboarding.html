@@ -1,0 +1,164 @@
+<div class="onboarding-container">
+  <!-- Progress bar -->
+  <div class="progress-bar" role="progressbar" [attr.aria-valuenow]="progreso()" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-fill" [style.width.%]="progreso()"></div>
+    <div class="progress-steps">
+      <span [class.active]="paso() >= 1" [class.completed]="paso() > 1">1</span>
+      <span [class.active]="paso() >= 2" [class.completed]="paso() > 2">2</span>
+      <span [class.active]="paso() >= 3" [class.completed]="paso() > 3">3</span>
+    </div>
+  </div>
+
+  <!-- Contenido del paso actual -->
+  <main class="paso-content">
+    
+    <!-- PASO 1: CATEGORÍAS FAVORITAS -->
+    @if (paso() === 1) {
+      <header class="paso-header">
+        <h1>¿Qué te gusta explorar?</h1>
+        <p class="subtitle">Elige tus categorías favoritas para personalizar tus recomendaciones</p>
+      </header>
+
+      <div class="categorias-grid" role="group" aria-label="Categorías favoritas">
+        @for (cat of categoriasDisponibles; track cat.id) {
+          <button 
+            type="button"
+            class="cat-btn favorita"
+            [class.selected]="esFavorita(cat.id)"
+            [attr.aria-pressed]="esFavorita(cat.id)"
+            (click)="toggleFavorita(cat.id)"
+          >
+            <span class="icon">{{ cat.icon }}</span>
+            <div class="info">
+              <span class="nombre">{{ cat.id }}</span>
+              <span class="desc">{{ cat.desc }}</span>
+            </div>
+            @if (esFavorita(cat.id)) {
+              <span class="check" aria-hidden="true">✓</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="inline-error" role="alert">{{ error() }}</div>
+      }
+    }
+
+    <!-- PASO 2: CATEGORÍAS A EVITAR -->
+    @if (paso() === 2) {
+      <header class="paso-header">
+        <h1>¿Qué prefieres evitar?</h1>
+        <p class="subtitle">Marca categorías que no quieres ver en tus sugerencias (opcional)</p>
+      </header>
+
+      <div class="categorias-grid" role="group" aria-label="Categorías a evitar">
+        @for (cat of categoriasDisponibles; track cat.id) {
+          <button 
+            type="button"
+            class="cat-btn evitada"
+            [class.selected]="esEvitada(cat.id)"
+            [attr.aria-pressed]="esEvitada(cat.id)"
+            (click)="toggleEvitada(cat.id)"
+            [disabled]="esFavorita(cat.id)"
+          >
+            <span class="icon">{{ cat.icon }}</span>
+            <div class="info">
+              <span class="nombre">{{ cat.id }}</span>
+              <span class="desc">{{ cat.desc }}</span>
+            </div>
+            @if (esEvitada(cat.id)) {
+              <span class="check" aria-hidden="true">✓</span>
+            }
+            @if (esFavorita(cat.id)) {
+              <span class="badge-fav" aria-hidden="true">Fav</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="inline-error" role="alert">{{ error() }}</div>
+      }
+    }
+
+    <!-- PASO 3: PRESUPUESTO -->
+    @if (paso() === 3) {
+      <header class="paso-header">
+        <h1>¿Cuál es tu presupuesto?</h1>
+        <p class="subtitle">Ayúdanos a filtrar por rango de precios (opcional)</p>
+      </header>
+
+      <div class="presupuesto-grid">
+        @for (op of opcionesPresupuesto; track op.valor) {
+          <button 
+            type="button"
+            class="presupuesto-btn"
+            [class.selected]="preferencias().presupuestoMinimo === op.valor"
+            (click)="presupuestoSeleccionado(op.valor)"
+          >
+            <span class="etiqueta">{{ op.etiqueta }}</span>
+            <span class="rango">{{ op.rango }}</span>
+          </button>
+        }
+        <button 
+          type="button"
+          class="presupuesto-btn cualquiera"
+          [class.selected]="!preferencias().presupuestoMinimo"
+          (click)="presupuestoSeleccionado('')"
+        >
+          <span class="etiqueta">🙈</span>
+          <span class="rango">Cualquiera</span>
+        </button>
+      </div>
+    }
+
+  </main>
+
+  <!-- Navegación inferior -->
+  <footer class="paso-footer">
+    @if (paso() > 1) {
+      <button 
+        type="button" 
+        class="btn-secundario" 
+        (click)="anterior()"
+        [disabled]="cargando()"
+      >
+        ← Atrás
+      </button>
+    } @else {
+      <div class="spacer"></div>
+    }
+
+    @if (paso() < totalPasos) {
+      <button 
+        type="button" 
+        class="btn-principal" 
+        (click)="siguiente()"
+        [disabled]="cargando()"
+      >
+        Siguiente →
+      </button>
+    } @else {
+      <button 
+        type="button" 
+        class="btn-finalizar" 
+        (click)="finalizar()"
+        [disabled]="cargando()"
+      >
+        @if (cargando()) {
+          <span class="spinner"></span> Guardando...
+        } @else {
+          🚀 Comenzar a explorar
+        }
+      </button>
+    }
+  </footer>
+
+  @if (error()) {
+    <div class="error-toast" role="alert">
+      <span class="error-icon">⚠️</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+</div>
