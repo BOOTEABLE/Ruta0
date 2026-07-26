@@ -13,7 +13,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // a cambiar código. Si tu materia pide que documentes qué versión exacta
 // usaste (para el benchmarking), imprime `response.modelVersion` una vez
 // y anótalo en el informe.
-const MODELO_GEMINI = "gemini-flash-lite-latest";
+const MODELO_GEMINI = "gemini-2.5-flash";
 
 // Cuántos turnos previos mandamos a Gemini. Sube/baja esto según cuánto
 // contexto necesite tu bot vs. cuántos tokens quieres pagar por request.

@@ -1,6 +1,6 @@
 import { pool } from './db.js';
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+const OVERPASS_URL = "https://lz4.overpass-api.de/api/interpreter";
 
 // 1. EXTRACT: Definimos la consulta Overpass (Quito)
 const queryOSM = `
@@ -175,6 +175,6 @@ export const ejecutarETL = async ({ cerrarConexionAlFinal = true } = {}) => {
 
 // Si el archivo se ejecuta directamente (`node src/repositories/etl.js`),
 // corre el ETL una vez y cierra la conexión al terminar, como antes.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1].endsWith('etl.js')) {
     ejecutarETL();
 }

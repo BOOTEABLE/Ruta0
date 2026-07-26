@@ -1,0 +1,74 @@
+<div class="register-wrapper">
+  <div class="register-card">
+    <div class="register-header">
+      <div class="logo">
+        <span class="logo-ruta">Ruta</span><span class="logo-zero">0</span>
+      </div>
+      <p class="tagline">Crea tu cuenta y explora Quito</p>
+    </div>
+
+    <form (ngSubmit)="registrar()" class="register-form" autocomplete="off">
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          type="text"
+          placeholder="Tu nombre"
+          [value]="nombre()"
+          (input)="actualizarCampo('nombre', $event)"
+          autocomplete="name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="tu@email.com"
+          [value]="email()"
+          (input)="actualizarCampo('email', $event)"
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          [value]="password()"
+          (input)="actualizarCampo('password', $event)"
+          autocomplete="new-password"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmarPassword">Confirmar Contraseña</label>
+        <input
+          id="confirmarPassword"
+          type="password"
+          placeholder="Repite tu contraseña"
+          [value]="confirmarPassword()"
+          (input)="actualizarCampo('confirmarPassword', $event)"
+          (keydown.enter)="registrar()"
+          autocomplete="new-password"
+        />
+      </div>
+
+      <div *ngIf="errores().length > 0" class="error-box">
+        <p *ngFor="let err of errores()">{{ err }}</p>
+      </div>
+
+      <button type="submit" class="btn-register" [disabled]="cargando()">
+        <span *ngIf="!cargando()">Crear Cuenta</span>
+        <span *ngIf="cargando()" class="spinner"></span>
+      </button>
+    </form>
+
+    <div class="register-footer">
+      <p>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
+    </div>
+  </div>
+</div>
