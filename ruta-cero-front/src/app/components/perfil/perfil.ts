@@ -17,11 +17,25 @@ export class PerfilComponent implements OnInit {
   private perfil = inject(PerfilService);
   private router = inject(Router);
 
+  // Exponer currentUser al template
+  currentUser = this.auth.currentUser;
+
   // Estado
   activeTab = signal<'preferencias' | 'itinerarios'>('preferencias');
   cargando = signal(false);
   error = signal<string | null>(null);
   exito = signal<string | null>(null);
+
+  volverAlMapa() {
+    this.router.navigate(['/']);
+  }
+
+  // Usuario actual
+  currentUser = this.auth.currentUser;
+
+  volverAlMapa() {
+    this.router.navigate(['/']);
+  }
 
   // Preferencias
   preferencias = signal<PreferenciasUsuario>({

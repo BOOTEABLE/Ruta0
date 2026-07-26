@@ -113,6 +113,7 @@ export class OnboardingComponent {
   }
 
   async finalizar() {
+    console.log("1. Botón presionado. Categorías:", this.preferencias().categoriasFavoritas);
     this.error.set(null);
     
     // Validar conflictos
@@ -125,6 +126,7 @@ export class OnboardingComponent {
     }
 
     this.cargando.set(true);
+    console.log("2. Enviando datos al backend...");
     try {
       // 1. Guardar preferencias
       await this.auth.actualizarPreferencias({
@@ -132,14 +134,20 @@ export class OnboardingComponent {
         categoriasEvitadas: evs,
         presupuestoMinimo: this.preferencias().presupuestoMinimo
       }).toPromise();
+      console.log("3. Preferencias guardadas correctamente");
 
       // 2. Marcar onboarding completado
       await this.auth.completeOnboarding().toPromise();
+      console.log("4. Onboarding marcado como completado");
+      
+      // Asegurar que el signal se haya propagado antes de navegar
+      await new Promise(r => setTimeout(r, 50));
 
       // 3. Navegar al dashboard
       this.router.navigate(['/']);
     } catch (err: any) {
-      this.error.set(err.error?.error || 'Error al completar onboarding');
+      console.error("❌ ERROR SILENCIOSO DESCUBIERTO:", err);
+      this.error.set(err.error?.error || err.message || 'Error al completar onboarding');
     } finally {
       this.cargando.set(false);
     }

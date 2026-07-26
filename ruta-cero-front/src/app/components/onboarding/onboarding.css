@@ -226,7 +226,7 @@
 }
 
 /* Presupuesto */
-.presupuesto-opciones {
+.presupuesto-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
@@ -400,7 +400,7 @@
     grid-template-columns: 1fr;
   }
   
-  .presupuesto-opciones {
+  .presupuesto-grid {
     grid-template-columns: 1fr;
   }
   

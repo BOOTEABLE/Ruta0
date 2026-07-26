@@ -94,8 +94,9 @@ export class AuthService {
   completeOnboarding() {
     return this.http.post<{ user: Usuario; onboardingCompletado: boolean }>(`${this.API}/perfil/onboarding-complete`, {}).pipe(
       tap(res => {
-        this.currentUser.set(res.user);
-        localStorage.setItem('user', JSON.stringify(res.user));
+        const updatedUser = { ...res.user, onboardingCompletado: true };
+        this.currentUser.set(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
       })
     );
   }

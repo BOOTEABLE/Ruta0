@@ -1,6 +1,13 @@
 <div class="perfil-container">
   <header class="perfil-header">
-    <h1>👤 Mi Perfil</h1>
+    <button class="btn-volver-mapa" (click)="volverAlMapa()">← Volver al mapa</button>
+    <div class="usuario-info">
+      <div class="usuario-avatar">{{ currentUser()?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</div>
+      <div>
+        <div class="usuario-nombre">{{ currentUser()?.nombre || 'Usuario' }}</div>
+        <div class="usuario-email">{{ currentUser()?.email }}</div>
+      </div>
+    </div>
     <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
   </header>
 

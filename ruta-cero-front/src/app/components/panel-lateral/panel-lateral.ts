@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Store } from '../../services/store';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
@@ -17,6 +18,7 @@ export class PanelLateral implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private perfil = inject(PerfilService);
+  private router = inject(Router);
 
   vista = this.store.vistaActual;
   lugarSeleccionado = this.store.lugarSeleccionado;
@@ -47,6 +49,10 @@ export class PanelLateral implements OnInit {
 
   cambiarVista(nuevaVista: 'descubrir' | 'chat' | 'detalle') {
     this.store.vistaActual.set(nuevaVista);
+  }
+
+  irAPerfil() {
+    this.router.navigate(['/perfil']);
   }
 
   logout() {
