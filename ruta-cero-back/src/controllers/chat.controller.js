@@ -5,7 +5,7 @@ import { procesarMensaje } from '../services/ai.service.js';
 // base de datos sobre en qué categoría concentrarse. La redacción de la
 // respuesta SIEMPRE la hace Gemini, usando lo recuperado como contexto.
 const PALABRAS_POR_CATEGORIA = {
-    'Cafeterías': [/\bcafe\w*\b/],
+    'Cafetería': [/\bcafe\w*\b/],
     'Gastronomía': [/\brestaurantes?\b/, /\bcomida\b/, /\balmorzar\b/, /\bcenar\b/],
     'Cultura': [/\bmuseos?\b/],
     'Parques': [/\bparques?\b/],

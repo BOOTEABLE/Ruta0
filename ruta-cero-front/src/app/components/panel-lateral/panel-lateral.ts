@@ -71,7 +71,13 @@ export class PanelLateral implements OnInit {
 
         if (res.lugaresFisicos && res.lugaresFisicos.length > 0) {
           console.log("📍 ¡Sí llegaron los lugares! Enviando al Store...");
-          this.store.lugaresRecomendados.set(res.lugaresFisicos);
+          // 👇 Conversión EXPLÍCITA a number para evitar type mismatch en el mapa
+          const lugaresConNumeros = res.lugaresFisicos.map((lugar: any) => ({
+            ...lugar,
+            latitud: Number(lugar.latitud),
+            longitud: Number(lugar.longitud)
+          }));
+          this.store.lugaresRecomendados.set(lugaresConNumeros);
         } else {
           console.warn("⚠️ Advertencia: lugaresFisicos llegó vacío o undefined");
         }

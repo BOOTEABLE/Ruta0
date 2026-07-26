@@ -4,8 +4,8 @@ export interface Lugar {
   id?: number;
   nombre: string;
   categoria: string;
-  latitud: number;
-  longitud: number;
+  latitud: number | string;
+  longitud: number | string;
   descripcion: string;
   horario?: string;
   precio?: string;
