@@ -13,8 +13,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // a cambiar código. Si tu materia pide que documentes qué versión exacta
 // usaste (para el benchmarking), imprime `response.modelVersion` una vez
 // y anótalo en el informe.
-const MODELO_GEMINI = "gemini-2.5-flash";
-
+const MODELO_GEMINI = "gemini-flash-lite-latest";
 // Cuántos turnos previos mandamos a Gemini. Sube/baja esto según cuánto
 // contexto necesite tu bot vs. cuántos tokens quieres pagar por request.
 const MAX_TURNOS_HISTORIAL = 6;
@@ -51,9 +50,10 @@ const separarRespuestaYRecomendados = (textoCompleto, lugaresDisponibles) => {
     const match = textoCompleto.match(/LUGARES_RECOMENDADOS:\s*(.+)/i);
 
     if (!match) {
-        // El modelo no siguió el formato esperado — no rompemos la app,
-        // devolvemos todo lo recuperado como antes (comportamiento seguro).
-        return { respuesta: textoCompleto.trim(), lugaresFisicos: lugaresDisponibles };
+        // 👇 CORRECCIÓN: Si el modelo no siguió el formato o no hay etiqueta,
+        // devolvemos un arreglo VACÍO. Así Angular limpiará el mapa y no
+        // dibujará pines fantasma.
+        return { respuesta: textoCompleto.trim(), lugaresFisicos: [] };
     }
 
     const respuestaLimpia = textoCompleto.slice(0, match.index).trim();
@@ -98,23 +98,26 @@ export const procesarMensaje = async (mensaje, lat, lng, historial = [], categor
             : '';
         const parametrosCategoria = categoriaNormalizada ? [categoriaNormalizada] : [];
 
-        // 1. Buscamos los 5 lugares más cercanos usando KNN (PostGIS <-> operator)
+        // 1. Buscamos a un radio de 2km (2000 metros) usando PostGIS
         if (lat && lng) {
-            console.log(`📍 Buscando 5 lugares más cercanos a: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
+            console.log(`📍 Buscando a 2km de: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
             const query = `
                 SELECT * FROM lugares 
-                WHERE 1=1 ${condicionCategoria}
-                ORDER BY ubicacion::geography <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-                LIMIT 5;
+                WHERE ST_DWithin(
+                    ubicacion::geography, 
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
+                    2000 
+                ) ${condicionCategoria}
+                LIMIT 30; 
             `;
             const resultadoDB = await pool.query(query, [lng, lat, ...parametrosCategoria]);
             lugares = resultadoDB.rows;
-            console.log(`📊 Lugares encontrados en BD (5 más cercanos): ${lugares.length}`);
+            console.log(`📊 Lugares encontrados en BD (Radio 2km): ${lugares.length}`);
         } else {
-            console.log("⚠️ No hay GPS. Buscando 5 lugares por defecto...");
+            console.log("⚠️ No hay GPS. Buscando lugares aleatorios...");
             const query = categoriaNormalizada
-                ? 'SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, \'á\', \'a\'), \'é\', \'e\'), \'í\', \'i\')) ILIKE lower($1) ORDER BY id ASC LIMIT 5;'
-                : 'SELECT * FROM lugares ORDER BY id ASC LIMIT 5;';
+                ? "SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, 'á', 'a'), 'é', 'e'), 'í', 'i')) ILIKE lower($1) LIMIT 30;"
+                : "SELECT * FROM lugares LIMIT 30;";
             const resultadoDB = await pool.query(query, parametrosCategoria);
             lugares = resultadoDB.rows;
             console.log(`📊 Lugares encontrados en BD (sin GPS, por defecto): ${lugares.length}`);

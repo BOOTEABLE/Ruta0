@@ -27,7 +27,9 @@ export class Mapa implements OnInit {
       const lugares = this.store.lugaresRecomendados();
       const ready = this.mapReady();
 
-      if (this.isBrowser && ready && this.map && lugares.length > 0) {
+      // 👇 CORRECCIÓN: Quitamos el "&& lugares.length > 0"
+      // Ahora si "lugares" viene vacío, también entrará a la función para limpiar el mapa.
+      if (this.isBrowser && ready && this.map) {
         this.actualizarMarcadores(lugares);
       }
     });
@@ -86,11 +88,14 @@ export class Mapa implements OnInit {
     if (!this.map || !this.markersLayer) return;
 
     import('leaflet').then((L) => {
+      // 🧹 LIMPIEZA INICIAL: Borra los pines del turno anterior
       this.markersLayer.clearLayers();
+      
+      // Si el arreglo viene vacío (porque Gemini recomendó lugares externos), se detiene aquí.
       if (lugares.length === 0) return;
 
+      // Si sí hay lugares locales, procedemos a dibujar los nuevos
       lugares.forEach(lugar => {
-        // 👇 Conversión EXPLÍCITA a number para evitar type mismatch
         const lat = Number(lugar.latitud);
         const lng = Number(lugar.longitud);
 
