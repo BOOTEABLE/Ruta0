@@ -39,7 +39,7 @@ export const getUserFromToken = async (token) => {
     if (!decoded) return null;
 
     const result = await pool.query(
-        'SELECT id, email, nombre, created_at FROM users WHERE id = $1',
+        'SELECT id, email, nombre, onboarding_completado, created_at FROM users WHERE id = $1',
         [decoded.id]
     );
     return result.rows[0] || null;
@@ -54,7 +54,7 @@ export const registerUser = async (email, password, nombre) => {
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
         `INSERT INTO users (email, password_hash, nombre) VALUES ($1, $2, $3)
-         RETURNING id, email, nombre, created_at`,
+         RETURNING id, email, nombre, onboarding_completado, created_at`,
         [email, passwordHash, nombre]
     );
     const user = result.rows[0];
@@ -78,6 +78,7 @@ export const loginUser = async (email, password) => {
         id: user.id,
         email: user.email,
         nombre: user.nombre,
+        onboarding_completado: user.onboarding_completado,
         created_at: user.created_at
     };
     const token = generateToken(userPublic);
