@@ -81,30 +81,46 @@ const separarRespuestaYRecomendados = (textoCompleto, lugaresDisponibles) => {
 export const procesarMensaje = async (mensaje, lat, lng, historial = [], categoria = null) => {
     try {
         let lugares = [];
-        const condicionCategoria = categoria ? 'AND categoria = $3' : '';
-        const parametrosCategoria = categoria ? [categoria] : [];
+        
+        // Normalizar categoría para búsqueda flexible: quitar acentos, minúsculas, quitar plural
+        let categoriaNormalizada = null;
+        if (categoria) {
+            categoriaNormalizada = categoria
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+                .replace(/s$/, ''); // quitar plural simple
+        }
+        
+        // Usar ILIKE con reemplazo manual de acentos para matching flexible
+        // (unaccent no está disponible en la BD, usamos replace manual)
+        const condicionCategoria = categoriaNormalizada 
+            ? "AND lower(replace(replace(replace(categoria, 'á', 'a'), 'é', 'e'), 'í', 'i')) ILIKE lower($3)" 
+            : '';
+        const parametrosCategoria = categoriaNormalizada ? [categoriaNormalizada] : [];
 
-        // 1. Buscamos a un radio de 2km (2000 metros) usando PostGIS
+        // 1. Buscamos a un radio de 5km (5000 metros) usando PostGIS
         if (lat && lng) {
-            console.log(`📍 Buscando a 2km de: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
+            console.log(`📍 Buscando a 5km de: Lat ${lat}, Lng ${lng}... ${categoria ? `(categoría: ${categoria})` : '(todas las categorías)'}`);
             const query = `
                 SELECT * FROM lugares 
                 WHERE ST_DWithin(
                     ubicacion::geography, 
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
-                    2000 
+                    5000 
                 ) ${condicionCategoria}
                 LIMIT 30; -- Limitamos a 30 para no saturar a la IA
             `;
             const resultadoDB = await pool.query(query, [lng, lat, ...parametrosCategoria]);
             lugares = resultadoDB.rows;
+            console.log(`📊 Lugares encontrados en BD: ${lugares.length}`);
         } else {
             console.log("⚠️ No hay GPS. Buscando lugares aleatorios...");
-            const query = categoria
-                ? 'SELECT * FROM lugares WHERE categoria = $1 LIMIT 30;'
+            const query = categoriaNormalizada
+                ? 'SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, \'á\', \'a\'), \'é\', \'e\'), \'í\', \'i\')) ILIKE lower($1) LIMIT 30;'
                 : 'SELECT * FROM lugares LIMIT 30;';
             const resultadoDB = await pool.query(query, parametrosCategoria);
             lugares = resultadoDB.rows;
+            console.log(`📊 Lugares encontrados en BD (sin GPS): ${lugares.length}`);
         }
 
         // 2. Formateamos los datos
