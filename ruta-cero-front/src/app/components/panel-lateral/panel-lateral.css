@@ -83,6 +83,11 @@
   background: var(--accent-light);
 }
 
+.admin-btn:hover {
+  color: #8b5cf6;
+  background: #ede9fe;
+}
+
 .logout-btn:hover {
   color: var(--danger);
   background: var(--danger-light);

@@ -17,6 +17,18 @@ export const authenticateToken = async (req, res, next) => {
     next();
 };
 
+export const verifyAdmin = async (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    if (req.user.rol !== 'admin') {
+        return res.status(403).json({ error: 'Acceso denegado: se requiere rol de administrador' });
+    }
+
+    next();
+};
+
 export const optionalAuth = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];

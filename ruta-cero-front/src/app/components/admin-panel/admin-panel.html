@@ -1,0 +1,345 @@
+<div class="admin-container">
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <button class="btn-back" (click)="volverAlMapa()">
+                <span class="material-icons">arrow_back</span>
+                Volver al mapa
+            </button>
+            <h1>Panel de Administración</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-badge" *ngIf="adminStats()?.totalUsers">
+                {{ adminStats()?.totalUsers }} usuarios · {{ adminStats()?.adminUsers }} admins
+            </span>
+        </div>
+    </header>
+
+    <!-- Mensajes -->
+    @if (error()) {
+        <div class="alert alert-error" role="alert">
+            <span class="material-icons">error</span>
+            {{ error() }}
+            <button class="btn-close" (click)="error.set(null)"><span class="material-icons">close</span></button>
+        </div>
+    }
+    @if (exito()) {
+        <div class="alert alert-success" role="alert">
+            <span class="material-icons">check_circle</span>
+            {{ exito() }}
+            <button class="btn-close" (click)="exito.set(null)"><span class="material-icons">close</span></button>
+        </div>
+    }
+
+    <!-- Tabs -->
+    <nav class="admin-tabs" role="tablist">
+        <button 
+            role="tab" 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'stats'"
+            (click)="setTab('stats')"
+            [attr.aria-selected]="activeTab() === 'stats'"
+        >
+            <span class="material-icons">analytics</span>
+            Estadísticas
+        </button>
+        <button 
+            role="tab" 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'cache'"
+            (click)="setTab('cache')"
+            [attr.aria-selected]="activeTab() === 'cache'"
+        >
+            <span class="material-icons">storage</span>
+            Caché
+        </button>
+        <button 
+            role="tab" 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'users'"
+            (click)="setTab('users')"
+            [attr.aria-selected]="activeTab() === 'users'"
+        >
+            <span class="material-icons">people</span>
+            Usuarios
+        </button>
+    </nav>
+
+    <!-- Tab Panels -->
+    <div class="tab-panel" role="tabpanel">
+
+        <!-- STATS TAB -->
+        @if (activeTab() === 'stats') {
+            <div class="section">
+                <div class="section-header">
+                    <h2>Estadísticas del Sistema</h2>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><span class="material-icons">people</span></div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ adminStats()?.totalUsers || 0 }}</span>
+                            <span class="stat-label">Usuarios totales</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon admin"><span class="material-icons">admin_panel_settings</span></div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ adminStats()?.adminUsers || 0 }}</span>
+                            <span class="stat-label">Administradores</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon onboarding"><span class="material-icons">assignment_turned_in</span></div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ adminStats()?.usersWithOnboarding || 0 }}</span>
+                            <span class="stat-label">Onboarding completado</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon cache"><span class="material-icons">storage</span></div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ cacheStats()?.totalLugares || 0 }}</span>
+                            <span class="stat-label">Lugares en caché</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon cache"><span class="material-icons">folder</span></div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ cacheStats()?.totalEntradas || 0 }}</span>
+                            <span class="stat-label">Entradas de caché</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Usuarios recientes</h3>
+                    @if (adminStats()?.recentUsers && adminStats()!.recentUsers!.length > 0) {
+                        <div class="data-table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Rol</th>
+                                        <th>Onboarding</th>
+                                        <th>Creado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (user of adminStats()?.recentUsers || []; track user.id) {
+                                        <tr>
+                                            <td>{{ user.nombre }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                <span class="role-badge" [class.admin]="user.rol === 'admin'">
+                                                    {{ user.rol }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge" [class.completed]="user.onboardingCompletado">
+                                                    {{ user.onboardingCompletado ? 'Completado' : 'Pendiente' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ formatearFecha(user.creado) }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    } @else {
+                        <p class="empty-state">No hay usuarios registrados</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- CACHE TAB -->
+        @if (activeTab() === 'cache') {
+            <div class="section">
+                <div class="section-header">
+                    <h2>Gestión de Caché</h2>
+                    <div class="cache-actions">
+                        <button class="btn btn-danger" (click)="limpiarCache()" [disabled]="cargando()">
+                            <span class="material-icons">delete_sweep</span>
+                            Limpiar toda la caché
+                        </button>
+                        <button class="btn btn-primary" (click)="cargarCacheStats()" [disabled]="cargando()">
+                            <span class="material-icons">refresh</span>
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cache Stats -->
+                <div class="cache-stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Entradas totales</span>
+                        <span class="stat-value">{{ cacheStats()?.totalEntradas || 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lugares totales</span>
+                        <span class="stat-value">{{ cacheStats()?.totalLugares || 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Más antigua</span>
+                        <span class="stat-value">{{ cacheStats()?.oldestEntry ? formatearFecha(cacheStats()!.oldestEntry) : '-' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Más reciente</span>
+                        <span class="stat-value">{{ cacheStats()?.newestEntry ? formatearFecha(cacheStats()!.newestEntry) : '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- Sources breakdown -->
+                <div class="section">
+                    <h3>Por fuente</h3>
+                    <div class="source-badges">
+                        @for (src of cacheStats()?.bySource || []; track src.source) {
+                            <span class="source-badge">
+                                {{ src.source }}: {{ src.count }}
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Cache Entries Table -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Entradas de Caché ({{ cacheTotal() }} total)</h3>
+                    </div>
+                    
+                    @if (cargando() && cacheEntries().length === 0) {
+                        <div class="loading-state">
+                            <span class="spinner"></span>
+                            Cargando entradas de caché...
+                        </div>
+                    } @else if (cacheEntries().length === 0) {
+                        <p class="empty-state">No hay entradas en caché</p>
+                    } @else {
+                        <div class="data-table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Clave</th>
+                                        <th>Lugares</th>
+                                        <th>Expira</th>
+                                        <th>Creada</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (entry of cacheEntries(); track entry.cacheKey) {
+                                        <tr>
+                                            <td>
+                                                <code class="cache-key">{{ entry.cacheKey }}</code>
+                                            </td>
+                                            <td>{{ entry.lugares }}</td>
+                                            <td>{{ formatearFecha(entry.expiresAt) }}</td>
+                                            <td>{{ formatearFecha(entry.createdAt) }}</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button 
+                                                        class="btn-icon btn-delete" 
+                                                        (click)="eliminarCacheEntry(entry.cacheKey)"
+                                                        title="Eliminar entrada"
+                                                    >
+                                                        <span class="material-icons">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- USERS TAB -->
+        @if (activeTab() === 'users') {
+            <div class="section">
+                <div class="section-header">
+                    <h2>Gestión de Usuarios</h2>
+                </div>
+                
+                @if (usersLoading()) {
+                    <div class="loading-state">
+                        <span class="spinner"></span>
+                        Cargando usuarios...
+                    </div>
+                } @else if (users().length === 0) {
+                    <p class="empty-state">No hay usuarios registrados</p>
+                } @else {
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Onboarding</th>
+                                    <th>Creado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (user of users(); track user.id) {
+                                    <tr>
+                                        <td>{{ user.nombre }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>
+                                            <span class="role-badge" [class.admin]="user.rol === 'admin'">
+                                                {{ user.rol }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" [class.completed]="user.onboardingCompletado">
+                                                {{ user.onboardingCompletado ? 'Completado' : 'Pendiente' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ formatearFecha(user.creado) }}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button 
+                                                    class="btn-icon" 
+                                                    (click)="toggleUserRole(user)"
+                                                    [title]="user.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'"
+                                                >
+                                                    <span class="material-icons">{{ user.rol === 'admin' ? 'remove_circle_outline' : 'person_add' }}</span>
+                                                </button>
+                                                <button 
+                                                    class="btn-icon btn-delete" 
+                                                    (click)="eliminarUser(user)"
+                                                    title="Eliminar usuario"
+                                                >
+                                                    <span class="material-icons">delete_outline</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    @if (usersTotal() > 20) {
+                        <div class="pagination">
+                            <button class="btn btn-sm" (click)="usersPage.update(p => Math.max(1, p - 1))" [disabled]="usersPage() === 1">
+                                <span class="material-icons">chevron_left</span>
+                            </button>
+                            <span>Página {{ usersPage() }} de {{ Math.ceil(usersTotal() / 20) }}</span>
+                            <button class="btn btn-sm" (click)="usersPage.update(p => p + 1)" [disabled]="usersPage() >= Math.ceil(usersTotal() / 20)">
+                                <span class="material-icons">chevron_right</span>
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>

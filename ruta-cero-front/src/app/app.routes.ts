@@ -5,14 +5,15 @@ import { RegisterComponent } from './components/register/register';
 import { OnboardingComponent } from './components/onboarding/onboarding';
 import { PerfilComponent } from './components/perfil/perfil';
 import { ItinerarioDetalleComponent } from './components/itinerario-detalle/itinerario-detalle';
-import { authGuard, guestGuard } from './guards/auth.guard';
+import { AdminPanelComponent } from './components/admin-panel/admin-panel';
+import { authGuard, guestGuard, adminGuard } from './guards/auth.guard';
 import { onboardingGuard } from './guards/onboarding.guard';
 
 export const routes: Routes = [
   {
     path: 'onboarding',
     component: OnboardingComponent,
-    canActivate: [authGuard]  // Solo usuarios autenticados (sin onboardingGuard para permitir acceso)
+    canActivate: [authGuard]
   },
   {
     path: 'perfil',
@@ -23,6 +24,11 @@ export const routes: Routes = [
     path: 'itinerario/:id',
     component: ItinerarioDetalleComponent,
     canActivate: [authGuard, onboardingGuard]
+  },
+  {
+    path: 'admin',
+    component: AdminPanelComponent,
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: '',

@@ -16,7 +16,7 @@ import { PerfilService } from '../../services/perfil.service';
 export class PanelLateral implements OnInit {
   private store = inject(Store);
   private api = inject(ApiService);
-  private auth = inject(AuthService);
+  public auth = inject(AuthService);
   private perfil = inject(PerfilService);
   private router = inject(Router);
 
@@ -170,6 +170,10 @@ export class PanelLateral implements OnInit {
 
   logout() {
     this.auth.logout();
+  }
+
+  irAAdmin() {
+    this.router.navigate(['/admin']);
   }
 
   seleccionarLugar(lugar: Lugar) {

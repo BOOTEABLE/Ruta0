@@ -20,7 +20,7 @@ export const verifyPassword = async (password, hash) => {
 
 export const generateToken = (user) => {
     return jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id, email: user.email, rol: user.rol },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
     );
@@ -39,7 +39,7 @@ export const getUserFromToken = async (token) => {
     if (!decoded) return null;
 
     const result = await pool.query(
-        'SELECT id, email, nombre, onboarding_completado, created_at FROM users WHERE id = $1',
+        'SELECT id, email, nombre, rol, onboarding_completado, created_at FROM users WHERE id = $1',
         [decoded.id]
     );
     return result.rows[0] || null;
@@ -52,10 +52,13 @@ export const registerUser = async (email, password, nombre) => {
     }
 
     const passwordHash = await hashPassword(password);
+    // Asignar rol 'admin' si es admin@gmail.com, sino 'user'
+    const rol = email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'user';
+    
     const result = await pool.query(
-        `INSERT INTO users (email, password_hash, nombre) VALUES ($1, $2, $3)
-         RETURNING id, email, nombre, onboarding_completado, created_at`,
-        [email, passwordHash, nombre]
+        `INSERT INTO users (email, password_hash, nombre, rol) VALUES ($1, $2, $3, $4)
+         RETURNING id, email, nombre, rol, onboarding_completado, created_at`,
+        [email, passwordHash, nombre, rol]
     );
     const user = result.rows[0];
     const token = generateToken(user);
@@ -78,6 +81,7 @@ export const loginUser = async (email, password) => {
         id: user.id,
         email: user.email,
         nombre: user.nombre,
+        rol: user.rol,
         onboarding_completado: user.onboarding_completado,
         created_at: user.created_at
     };
