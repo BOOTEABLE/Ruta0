@@ -48,7 +48,7 @@
 }
 
 .lugar-card:hover {
-  border-color: var(--accent-primary, #6366f1);
+  border-color: var(--accent);
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
 }
 
@@ -77,7 +77,7 @@
 
 .lugar-categoria {
   font-size: 0.75rem;
-  color: var(--accent-primary, #6366f1);
+  color: var(--accent);
   background: rgba(99, 102, 241, 0.1);
   padding: 2px 8px;
   border-radius: 4px;
@@ -97,7 +97,7 @@
 
 .btn-ver-lugar {
   padding: 10px 20px;
-  background: var(--accent-primary, #6366f1);
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 8px;

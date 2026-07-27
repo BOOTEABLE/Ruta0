@@ -24,7 +24,7 @@
 
 .progreso-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, var(--green-600) 0%, var(--green-400) 100%);
   border-radius: 3px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0%;
@@ -52,15 +52,15 @@
 }
 
 .pasos-indicador span.activo {
-  color: #6366f1;
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.1);
+  color: var(--green-600);
+  border-color: var(--green-600);
+  background: rgba(46, 125, 50, 0.1);
 }
 
 .pasos-indicador span.completado {
   color: #fff;
-  border-color: #10b981;
-  background: #10b981;
+  border-color: var(--green-500);
+  background: var(--green-500);
 }
 
 .paso-contenido {
@@ -123,8 +123,8 @@
 }
 
 .cat-btn:hover:not(:disabled) {
-  border-color: #6366f1;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+  border-color: var(--green-600);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.12);
   transform: translateY(-2px);
 }
 
@@ -134,9 +134,9 @@
 }
 
 .cat-btn.favorita.selected {
-  border-color: #6366f1;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+  border-color: var(--green-600);
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(67, 160, 71, 0.08) 100%);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.15);
 }
 
 .cat-btn.evitada.selected {
@@ -178,7 +178,7 @@
 .cat-btn .check {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #6366f1;
+  color: var(--green-600);
 }
 
 .cat-btn.evitada .check {
@@ -190,8 +190,8 @@
   top: 8px;
   right: 8px;
   font-size: 0.75rem;
-  color: #6366f1;
-  background: rgba(99, 102, 241, 0.1);
+  color: var(--green-600);
+  background: rgba(46, 125, 50, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -209,9 +209,9 @@
 
 .contador.completo {
   border-style: solid;
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.05);
-  color: #6366f1;
+  border-color: var(--green-600);
+  background: rgba(46, 125, 50, 0.05);
+  color: var(--green-600);
   font-weight: 600;
 }
 
@@ -248,15 +248,15 @@
 }
 
 .presupuesto-btn:hover {
-  border-color: #6366f1;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+  border-color: var(--green-600);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.12);
   transform: translateY(-2px);
 }
 
 .presupuesto-btn.selected {
-  border-color: #6366f1;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+  border-color: var(--green-600);
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(67, 160, 71, 0.08) 100%);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.15);
 }
 
 .precio {
@@ -274,7 +274,7 @@
 
 .check-grande {
   font-size: 1.5rem;
-  color: #6366f1;
+  color: var(--green-600);
   margin-top: 4px;
 }
 
@@ -317,14 +317,14 @@
 }
 
 .btn-principal {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: var(--accent-gradient);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
 }
 
 .btn-principal:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 24px rgba(46, 125, 50, 0.4);
 }
 
 .btn-principal:disabled {

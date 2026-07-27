@@ -30,13 +30,6 @@ export class PerfilComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  // Usuario actual
-  currentUser = this.auth.currentUser;
-
-  volverAlMapa() {
-    this.router.navigate(['/']);
-  }
-
   // Preferencias
   preferencias = signal<PreferenciasUsuario>({
     categoriasFavoritas: [],
