@@ -1,0 +1,59 @@
+<div class="itinerario-detalle-container">
+  <header class="detalle-header">
+    <button class="btn-volver" (click)="volver()">← Volver al perfil</button>
+    <h1>{{ itinerario()?.nombre }}</h1>
+  </header>
+
+  @if (cargando()) {
+    <div class="cargando">Cargando itinerario...</div>
+  } @else if (error()) {
+    <div class="error" role="alert">{{ error() }}</div>
+  } @else if (itinerario(); as it) {
+    <div class="detalle-content">
+      
+      <div class="info-principal">
+        <div class="meta">
+          <span class="fecha">📅 Creado: {{ formatearFecha(it.createdAt) }}</span>
+          <span class="lugares-count">📍 {{ it.lugares.length || 0 }} lugares</span>
+        </div>
+        
+        @if (it.descripcion) {
+          <p class="descripcion">{{ it.descripcion }}</p>
+        }
+      </div>
+
+      <div class="lugares-seccion">
+        <h2>Lugares del recorrido</h2>
+        
+        @if (it.lugares && it.lugares.length > 0) {
+          <ul class="lugares-lista">
+            @for (lugar of it.lugares; track lugar.id; let i = $index) {
+              <li class="lugar-item">
+                <div class="lugar-orden">{{ i + 1 }}</div>
+                <div class="lugar-info">
+                  <h3>{{ lugar.nombre }}</h3>
+                  <span class="categoria">{{ lugar.categoria }}</span>
+                </div>
+                @if (lugar.precio) {
+                  <span class="precio">{{ lugar.precio }}</span>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="sin-lugares">Este itinerario no tiene lugares asociados</p>
+        }
+      </div>
+
+      <div class="acciones">
+        <button 
+          class="btn-ver-mapa" 
+          (click)="verEnMapa()"
+          [disabled]="!itinerario()?.lugares?.length"
+        >
+          🗺️ Ver en el mapa
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -1,14 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 
 export interface Lugar {
-  id?: number;
+  id?: number | string;
   nombre: string;
   categoria: string;
-  latitud: number;
-  longitud: number;
+  latitud: number | string;
+  longitud: number | string;
   descripcion: string;
   horario?: string;
   precio?: string;
+  photoUrl?: string;
+  rating?: number;
+  source?: string;
 }
 
 // 1. NUEVO: Agregamos la estructura para los mensajes

@@ -1,8 +1,12 @@
-import { Component, inject, OnInit } from '@angular/core'; // <-- 1. Importamos OnInit
+import { Component, inject, OnInit, ElementRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Store } from '../../services/store';
-import { LugaresService } from '../../services/lugares'; // Ajusta la ruta
+import { Router } from '@angular/router';
+import { Store, Lugar } from '../../services/store';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+import { PerfilService } from '../../services/perfil.service';
+import { AdminService } from '../../services/admin.service';
+
 @Component({
   selector: 'app-panel-lateral',
   standalone: true,
@@ -10,114 +14,435 @@ import { LugaresService } from '../../services/lugares'; // Ajusta la ruta
   templateUrl: './panel-lateral.html',
   styleUrl: './panel-lateral.css'
 })
-export class PanelLateral implements OnInit { // <-- 2. Implementamos OnInit
+export class PanelLateral implements OnInit {
   private store = inject(Store);
-  private http = inject(HttpClient);
-  private lugaresService = inject(LugaresService);
+  private api = inject(ApiService);
+  public auth = inject(AuthService);
+  private perfil = inject(PerfilService);
+  private router = inject(Router);
+  private admin = inject(AdminService);
+
+  @ViewChild('messagesContainer') messagesContainer?: ElementRef;
+
   vista = this.store.vistaActual;
   lugarSeleccionado = this.store.lugarSeleccionado;
   historial = this.store.historialChat;
-  procesandoMensaje = false;
+  lugaresRecomendados = this.store.lugaresRecomendados;
+  cargandoGooglePlaces = signal(false);
+  mostrandoDefaults = signal(true);
 
-  // 👇 3. Variables para guardar tu ubicación exacta en memoria
+  // Default places shown when no API data is available
+  lugaresDefault: Lugar[] = [
+    {
+      id: 0,
+      nombre: 'Café de la Vaca Centro',
+      categoria: 'Cafetería',
+      descripcion: 'Acogedora cafetería tradicional en el corazón del Centro Histórico, famosa por su café de altura y ambiente bohemio.',
+      latitud: -0.2225,
+      longitud: -78.5118,
+      precio: '$',
+      horario: '08:00 – 20:00'
+    },
+    {
+      id: 1,
+      nombre: 'Parque La Carolina',
+      categoria: 'Parque',
+      descripcion: 'El pulmón verde de Quito con 67 hectáreas de áreas verdes, lagunas artificiales, ciclovías y zonas deportivas.',
+      latitud: -0.1807,
+      longitud: -78.4818,
+      precio: 'Gratis',
+      horario: '05:00 – 18:00'
+    },
+    {
+      id: 2,
+      nombre: 'Teleférico de Quito',
+      categoria: 'Mirador',
+      descripcion: 'Sube a 4.053 msnm en el teleférico más alto de Sudamérica. Vista panorámica espectacular de todo el valle de Quito.',
+      latitud: -0.1985,
+      longitud: -78.5195,
+      precio: '$$',
+      horario: '09:00 – 17:00'
+    },
+    {
+      id: 3,
+      nombre: 'Basílica del Voto Nacional',
+      categoria: 'Iglesia',
+      descripcion: 'Imponente basílica neogótica, la más grande de América. Subir a sus torres ofrece una vista única del Centro Histórico.',
+      latitud: -0.2157,
+      longitud: -78.5073,
+      precio: '$',
+      horario: '09:00 – 17:00'
+    },
+    {
+      id: 4,
+      nombre: 'Museo de la Ciudad',
+      categoria: 'Museo',
+      descripcion: 'Recorrido interactivo por la historia de Quito desde sus orígenes precolombinos hasta la actualidad, en una casona del siglo XVI.',
+      latitud: -0.2200,
+      longitud: -78.5120,
+      precio: '$',
+      horario: '09:30 – 17:30'
+    }
+  ];
+
+  procesandoMensaje = false;
+  guardandoItinerario = false;
+  destacando = false; // 👈 AGREGAR ESTA VARIABLE
+
   miLatitud: number | null = null;
   miLongitud: number | null = null;
 
-  // 👇 4. Esto se ejecuta UNA SOLA VEZ apenas se abre la aplicación
+  // Map from category → gradient for card image placeholders
+  private categoryGradients: Record<string, string> = {
+    'Cafetería': 'linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #DEB887 100%)',
+    'Restaurante': 'linear-gradient(135deg, #c0392b 0%, #e67e22 50%, #f39c12 100%)',
+    'Parque': 'linear-gradient(135deg, #14532d 0%, #2e7d32 50%, #66bb6a 100%)',
+    'Museo': 'linear-gradient(135deg, #1a1a2e 0%, #4a148c 50%, #7b1fa2 100%)',
+    'Iglesia': 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d8b4fe 100%)',
+    'Mirador': 'linear-gradient(135deg, #1e3a5f 0%, #0284c7 50%, #38bdf8 100%)',
+    'Centro Comercial': 'linear-gradient(135deg, #1e293b 0%, #475569 50%, #94a3b8 100%)',
+    'Teatro': 'linear-gradient(135deg, #881337 0%, #be123c 50%, #fb7185 100%)',
+    'Mercado': 'linear-gradient(135deg, #92400e 0%, #d97706 50%, #fbbf24 100%)',
+  };
+
+  private categoryIcons: Record<string, string> = {
+    'Cafetería': '☕',
+    'Restaurante': '🍽️',
+    'Parque': '🌳',
+    'Museo': '🏛️',
+    'Iglesia': '⛪',
+    'Mirador': '🏔️',
+    'Centro Comercial': '🛍️',
+    'Teatro': '🎭',
+    'Mercado': '🧺',
+  };
+
   ngOnInit() {
-    console.log("📍 Buscando GPS inicial silenciosamente...");
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (posicion) => {
           this.miLatitud = posicion.coords.latitude;
           this.miLongitud = posicion.coords.longitude;
-          console.log(`✅ ¡Ubicación lista! Coordenadas guardadas: ${this.miLatitud}, ${this.miLongitud}`);
         },
-        (error) => {
-          console.warn("⚠️ No se pudo obtener el GPS inicial.");
-        },
-        { enableHighAccuracy: true } // Pedimos alta precisión porque tenemos tiempo
+        () => {},
+        { enableHighAccuracy: true }
       );
+    }
+  }
+
+  // Cargar lugares de Google Places cuando se abre Descubrir
+  async cargarGooglePlaces() {
+    if (this.cargandoGooglePlaces() || this.lugaresRecomendados().length > 0) return;
+    if (this.miLatitud === null || this.miLongitud === null) return;
+
+    this.cargandoGooglePlaces.set(true);
+    try {
+      const categorias = ['Cafetería', 'Parque', 'Museo'];
+      const resultados = await Promise.all(
+        categorias.map(cat => this.perfil.obtenerLugaresGoogle(cat, this.miLatitud!, this.miLongitud!, 5000).toPromise())
+      );
+
+      const lugaresGoogle = resultados
+        .flatMap(r => r?.lugares || [])
+        .filter((l, i, arr) => arr.findIndex(x => x.id === l.id) === i)
+        .slice(0, 10);
+
+      if (lugaresGoogle.length > 0) {
+        this.mostrandoDefaults.set(false);
+        this.store.lugaresRecomendados.set(lugaresGoogle as any);
+      }
+    } catch (err) {
+      console.warn('No se pudieron cargar lugares de Google Places:', err);
+    } finally {
+      this.cargandoGooglePlaces.set(false);
     }
   }
 
   cambiarVista(nuevaVista: 'descubrir' | 'chat' | 'detalle') {
     this.store.vistaActual.set(nuevaVista);
+    if (nuevaVista === 'descubrir' && this.lugaresRecomendados().length === 0) {
+      setTimeout(() => this.cargarGooglePlaces(), 100);
+    }
   }
 
-  enviarMensaje(texto: string, inputElement: HTMLInputElement) {
-    // Si no hay texto, o si YA estamos procesando un mensaje, no hagas nada (bloqueo)
-    if (!texto.trim() || this.procesandoMensaje) return;
+  irAPerfil() {
+    this.router.navigate(['/perfil']);
+  }
 
-    // Cerramos el candado
-    this.procesandoMensaje = true;
+  logout() {
+    this.auth.logout();
+  }
 
+  irAAdmin() {
+    this.router.navigate(['/admin']);
+  }
+
+  seleccionarLugar(lugar: Lugar) {
+    this.store.lugarSeleccionado.set(lugar);
+    this.store.vistaActual.set('detalle');
+  }
+
+  usarDefaultLugares(): Lugar[] {
+    return this.lugaresDefault;
+  }
+
+  centrarMapa(lugar: Lugar | null) {
+    if (lugar) {
+        this.store.lugarSeleccionado.set(lugar);
+        this.store.vistaActual.set('descubrir');
+    }
+}
+  getCategoryGradient(categoria?: string): string {
+    return this.categoryGradients[categoria || ''] || 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #5eead4 100%)';
+  }
+
+  getCategoryIcon(categoria?: string): string {
+    return this.categoryIcons[categoria || ''] || '📍';
+  }
+
+  sugerirCategoria(categoria: string) {
+    const mensaje = `Muéstrame lugares de tipo "${categoria}" en Quito`;
+    this.cambiarVista('chat');
+    setTimeout(() => {
+      this.enviarTextoDirecto(mensaje);
+    }, 100);
+  }
+
+ preguntarPorLugar(lugar: Lugar | null) {
+    if (lugar) {
+        const mensaje = `Cuéntame más sobre ${lugar.nombre} en Quito`;
+        this.cambiarVista('chat');
+        setTimeout(() => {
+            this.enviarTextoDirecto(mensaje);
+        }, 100);
+    }
+}
+
+  private enviarTextoDirecto(texto: string) {
     this.historial.update(h => [...h, { emisor: 'usuario', texto }]);
-    inputElement.value = ''; 
-    
-    // 👇 5. Envío INSTANTÁNEO usando las variables guardadas (0 esperas)
-    console.log("🚀 Enviando mensaje al backend con tu ubicación guardada...");
+    this.procesandoMensaje = true;
     this.llamarBackend(texto, this.miLatitud, this.miLongitud);
   }
 
-  // Función auxiliar que se encarga de hablar con Node.js
-  llamarBackend(texto: string, lat: number | null, lng: number | null) {
-    const payload = { mensaje: texto, lat: lat, lng: lng };
+  enviarMensaje(texto: string, inputElement: HTMLInputElement) {
+    if (!texto.trim() || this.procesandoMensaje) return;
+    inputElement.value = '';
+    this.enviarTextoDirecto(texto.trim());
+  }
 
-    this.http.post<any>('http://localhost:3000/api/chat', payload).subscribe({
+  private llamarBackend(texto: string, lat: number | null, lng: number | null) {
+    const payload = { mensaje: texto, lat, lng, historial: this.historial() };
+
+    this.api.post<any>('/api/chat', payload).subscribe({
       next: (res) => {
-        // 👇 ESTA LÍNEA ES VITAL PARA DEPURAR
-        console.log("📦 Respuesta completa del servidor:", res);
-        
-        const textoDelServidor = res?.respuesta || "Recibí los datos...";
+        const textoDelServidor = res?.respuesta || 'Recibí los datos...';
         this.historial.update(h => [...h, { emisor: 'bot', texto: textoDelServidor }]);
-        
+
         if (res.lugaresFisicos && res.lugaresFisicos.length > 0) {
-           console.log("📍 ¡Sí llegaron los lugares! Enviando al Store...");
-           this.store.lugaresRecomendados.set(res.lugaresFisicos);
+          this.mostrandoDefaults.set(false);
+          const lugaresConNumeros = res.lugaresFisicos.map((lugar: any) => ({
+            ...lugar,
+            latitud: Number(lugar.latitud),
+            longitud: Number(lugar.longitud)
+          }));
+          this.store.lugaresRecomendados.set(lugaresConNumeros as any);
         } else {
-           console.warn("⚠️ Advertencia: lugaresFisicos llegó vacío o undefined");
+          this.mostrandoDefaults.set(false);
+          this.store.lugaresRecomendados.set([]);
         }
-        
+
         this.procesandoMensaje = false;
+        setTimeout(() => this.scrollAlFinal(), 50);
       },
-      error: (err) => {
-        console.error("❌ Error conectando con el backend:", err);
-        this.historial.update(h => [...h, { emisor: 'bot', texto: "Upps, no pude conectar con el servidor." }]);
-        
-        // También abrimos el candado si hay un error
+      error: () => {
+        this.historial.update(h => [...h, { emisor: 'bot', texto: 'Upps, no pude conectar con el servidor.' }]);
         this.procesandoMensaje = false;
       }
     });
   }
 
-  seleccionarLugarEjemplo() {
-    const ejemplo = {
-      nombre: 'Café de la Vaca Centro',
-      categoria: 'Cafetería',
-      latitud: -0.2225,
-      longitud: -78.5118,
-      descripcion: 'Excelente cafetería tradicional ubicada en el centro histórico de la ciudad.'
-    };
+  private scrollAlFinal() {
+    try {
+      this.messagesContainer?.nativeElement?.scrollTo({
+        top: this.messagesContainer.nativeElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    } catch {}
+  }
+
+  // 👈 MÉTODO PARA DESTACAR LUGAR
+  async destacarLugar(lugar: any) {
+    if (!lugar) {
+      this.mostrarToast('No hay lugar seleccionado', 'error');
+      return;
+    }
     
-    this.store.lugaresRecomendados.set([ejemplo]);
-    this.store.lugarSeleccionado.set(ejemplo);
-    this.store.vistaActual.set('detalle');
+    this.destacando = true;
+    try {
+      // Verificar si ya está destacado por este usuario
+      const destacados = await this.admin.getMisDestacados().toPromise();
+      if (destacados?.destacados?.some((d: any) => d.nombre === lugar.nombre)) {
+        this.mostrarToast('⚠️ Este lugar ya está en tus destacados', 'info');
+        return;
+      }
+
+      await this.admin.createDestacado({
+        nombre: lugar.nombre,
+        categoria: lugar.categoria || 'General',
+        descripcion: lugar.descripcion || 'Lugar destacado desde el mapa',
+        latitud: Number(lugar.latitud),
+        longitud: Number(lugar.longitud),
+        direccion: lugar.direccion || lugar.vicinity || '',
+        horario: lugar.horario || '',
+        precio: lugar.precio || '',
+        imagen_url: lugar.photoUrl || ''
+      }).toPromise();
+      
+      this.mostrarToast('⭐ Lugar destacado guardado exitosamente', 'success');
+    } catch (err: any) {
+      console.error('❌ Error destacando lugar:', err);
+      this.mostrarToast(err.error?.error || 'Error al destacar el lugar', 'error');
+    } finally {
+      this.destacando = false;
+    }
+  }
+
+  // 👈 MÉTODO guardarItinerarioActual
+  async guardarItinerarioActual() {
+    console.log('🔵 guardarItinerarioActual() ejecutado');
+    
+    const lugares = this.lugaresRecomendados();
+    console.log('📦 Lugares:', lugares);
+    
+    if (!lugares || lugares.length === 0) {
+        this.mostrarToast('No hay lugares para guardar');
+        return;
+    }
+
+    this.mostrarModalGuardar();
+  }
+
+  mostrarModalGuardar() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-guardar';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon">💾</span>
+                <h3 class="modal-title">Guardar Itinerario</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle">¿Cómo quieres llamar a este itinerario?</p>
+                <p class="modal-hint">Ej: "Mi plan en Quito", "Ruta de cafés", etc.</p>
+                <input 
+                    id="nombreItinerario" 
+                    type="text" 
+                    value="Mi plan" 
+                    placeholder="Escribe un nombre..."
+                    autofocus
+                >
+            </div>
+            <div class="modal-footer">
+                <button id="btnCancelar" class="btn-cancelar">Cancelar</button>
+                <button id="btnGuardar" class="btn-guardar">💾 Guardar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('#nombreItinerario') as HTMLInputElement;
+    input.focus();
+    input.select();
+
+    const guardar = () => {
+        const nombre = input.value.trim();
+        if (nombre) {
+            modal.remove();
+            this.ejecutarGuardado(nombre);
+        }
+    };
+
+    const cancelar = () => {
+        modal.remove();
+        this.mostrarToast('Guardado cancelado', 'info');
+    };
+
+    modal.querySelector('#btnGuardar')?.addEventListener('click', guardar);
+    modal.querySelector('#btnCancelar')?.addEventListener('click', cancelar);
+    
+    input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') guardar();
+        if (e.key === 'Escape') cancelar();
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) cancelar();
+    });
+  }
+
+  async ejecutarGuardado(nombre: string) {
+    const lugares = this.lugaresRecomendados();
+    if (!lugares || lugares.length === 0) {
+        this.mostrarToast('No hay lugares para guardar');
+        return;
+    }
+
+    this.guardandoItinerario = true;
+    try {
+        const lugaresIds = lugares
+            .map(l => l.id)
+            .filter((id): id is number => id != null);
+
+        if (lugaresIds.length === 0) {
+            this.mostrarToast('No se pudieron obtener los IDs de los lugares');
+            return;
+        }
+
+        await this.perfil.guardarItinerario({
+            nombre: nombre,
+            descripcion: 'Itinerario guardado desde el chat',
+            lugaresIds: lugaresIds
+        }).toPromise();
+
+        this.mostrarToast(`✅ "${nombre}" guardado con ${lugaresIds.length} lugares`, 'success');
+        
+        this.store.lugaresRecomendados.set([]);
+        
+    } catch (err: any) {
+        console.error('❌ Error guardando itinerario:', err);
+        this.mostrarToast(err.error?.error || '❌ Error al guardar el itinerario', 'error');
+    } finally {
+        this.guardandoItinerario = false;
+    }
+  }
+
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
+    const toastsExistentes = document.querySelectorAll('.toast-notificacion');
+    toastsExistentes.forEach(t => t.remove());
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notificacion ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3500);
   }
 
   formatearMensaje(texto: string): string {
     if (!texto) return '';
-    
     let html = texto;
-    // 1. Convierte los **textos** en negritas (<strong>)
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // 2. Convierte los *textos* en cursivas (<em>)
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // 3. Convierte los saltos de línea ocultos (\n) en saltos reales (<br>)
     html = html.replace(/\n/g, '<br>');
-    
     return html;
+  }
+
+  truncarDescripcion(desc: string | null | undefined, max: number): string {
+    if (!desc) return '';
+    return desc.length > max ? desc.slice(0, max) + '...' : desc;
   }
 }

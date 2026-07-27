@@ -14,7 +14,6 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // usaste (para el benchmarking), imprime `response.modelVersion` una vez
 // y anótalo en el informe.
 const MODELO_GEMINI = "gemini-flash-lite-latest";
-
 // Cuántos turnos previos mandamos a Gemini. Sube/baja esto según cuánto
 // contexto necesite tu bot vs. cuántos tokens quieres pagar por request.
 const MAX_TURNOS_HISTORIAL = 6;
@@ -51,9 +50,10 @@ const separarRespuestaYRecomendados = (textoCompleto, lugaresDisponibles) => {
     const match = textoCompleto.match(/LUGARES_RECOMENDADOS:\s*(.+)/i);
 
     if (!match) {
-        // El modelo no siguió el formato esperado — no rompemos la app,
-        // devolvemos todo lo recuperado como antes (comportamiento seguro).
-        return { respuesta: textoCompleto.trim(), lugaresFisicos: lugaresDisponibles };
+        // 👇 CORRECCIÓN: Si el modelo no siguió el formato o no hay etiqueta,
+        // devolvemos un arreglo VACÍO. Así Angular limpiará el mapa y no
+        // dibujará pines fantasma.
+        return { respuesta: textoCompleto.trim(), lugaresFisicos: [] };
     }
 
     const respuestaLimpia = textoCompleto.slice(0, match.index).trim();
@@ -81,8 +81,22 @@ const separarRespuestaYRecomendados = (textoCompleto, lugaresDisponibles) => {
 export const procesarMensaje = async (mensaje, lat, lng, historial = [], categoria = null) => {
     try {
         let lugares = [];
-        const condicionCategoria = categoria ? 'AND categoria = $3' : '';
-        const parametrosCategoria = categoria ? [categoria] : [];
+        
+        // Normalizar categoría para búsqueda flexible: quitar acentos, minúsculas, quitar plural
+        let categoriaNormalizada = null;
+        if (categoria) {
+            categoriaNormalizada = categoria
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+                .replace(/s$/, ''); // quitar plural simple
+        }
+        
+        // Usar ILIKE con reemplazo manual de acentos para matching flexible
+        // (unaccent no está disponible en la BD, usamos replace manual)
+        const condicionCategoria = categoriaNormalizada 
+            ? "AND lower(replace(replace(replace(categoria, 'á', 'a'), 'é', 'e'), 'í', 'i')) ILIKE lower($3)" 
+            : '';
+        const parametrosCategoria = categoriaNormalizada ? [categoriaNormalizada] : [];
 
         // 1. Buscamos a un radio de 2km (2000 metros) usando PostGIS
         if (lat && lng) {
@@ -94,17 +108,19 @@ export const procesarMensaje = async (mensaje, lat, lng, historial = [], categor
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
                     2000 
                 ) ${condicionCategoria}
-                LIMIT 30; -- Limitamos a 30 para no saturar a la IA
+                LIMIT 30; 
             `;
             const resultadoDB = await pool.query(query, [lng, lat, ...parametrosCategoria]);
             lugares = resultadoDB.rows;
+            console.log(`📊 Lugares encontrados en BD (Radio 2km): ${lugares.length}`);
         } else {
             console.log("⚠️ No hay GPS. Buscando lugares aleatorios...");
-            const query = categoria
-                ? 'SELECT * FROM lugares WHERE categoria = $1 LIMIT 30;'
-                : 'SELECT * FROM lugares LIMIT 30;';
+            const query = categoriaNormalizada
+                ? "SELECT * FROM lugares WHERE lower(replace(replace(replace(categoria, 'á', 'a'), 'é', 'e'), 'í', 'i')) ILIKE lower($1) LIMIT 30;"
+                : "SELECT * FROM lugares LIMIT 30;";
             const resultadoDB = await pool.query(query, parametrosCategoria);
             lugares = resultadoDB.rows;
+            console.log(`📊 Lugares encontrados en BD (sin GPS, por defecto): ${lugares.length}`);
         }
 
         // 2. Formateamos los datos
