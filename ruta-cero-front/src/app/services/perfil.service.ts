@@ -14,6 +14,7 @@ export interface Itinerario {
   nombre: string;
   descripcion: string | null;
   lugaresIds: number[];
+  lugares?: Lugar[]; 
   createdAt: string;
   updatedAt: string;
 }

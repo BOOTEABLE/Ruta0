@@ -31,6 +31,15 @@
     >
       🗂️ Mis Itinerarios
     </button>
+    <button 
+      role="tab" 
+      class="tab" 
+      [class.active]="activeTab() === 'destacados'"
+      (click)="setTab('destacados')"
+      [attr.aria-selected]="activeTab() === 'destacados'"
+    >
+      ⭐ Mis Destacados
+    </button>
   </nav>
 
   @if (error()) {
@@ -136,11 +145,12 @@
             >
               <div class="itinerario-main">
                 <h3>{{ it.nombre }}</h3>
-                <span class="fecha">{{ formatearFecha(it.createdAt) }}</span>
+                <!-- En perfil.html, eliminar o comentar la línea de la fecha -->
+<!-- <span class="fecha">{{ formatearFecha(it.createdAt) }}</span> -->
               </div>
               <p class="descripcion" *ngIf="it.descripcion">{{ it.descripcion }}</p>
               <div class="lugares-count">
-                📍 {{ it.lugaresIds?.length || 0 }} lugares
+                📍 {{ it.lugares?.length || it.lugaresIds?.length || 0 }} lugares
               </div>
 
               @if (itinerarioExpandido() === it.id && itinerarioDetalle()) {
@@ -167,6 +177,57 @@
           }
         </div>
       }
+    </section>
+  }
+
+  <!-- TAB: MIS DESTACADOS -->
+  @if (activeTab() === 'destacados') {
+    <section class="tab-panel">
+      <div class="destacados-header">
+        <h2>⭐ Mis Lugares Destacados</h2>
+        <span class="badge">{{ misDestacados().length }} lugares</span>
+      </div>
+      
+      <p class="hint">
+        💡 Los lugares que destacas aparecerán en tus recomendaciones principales. 
+        Para agregar un lugar, ve al mapa, selecciona un lugar y haz clic en "Destacar".
+      </p>
+
+      <div class="destacados-grid">
+        @if (cargandoDestacados()) {
+          <div class="loading-state">
+            <span class="spinner"></span>
+            Cargando destacados...
+          </div>
+        } @else {
+          @for (item of misDestacados(); track item.id) {
+            <div class="destacado-card">
+              <div class="destacado-header">
+                <h4>{{ item.nombre }}</h4>
+                <span class="categoria-badge">{{ item.categoria }}</span>
+              </div>
+              <p class="destacado-desc">{{ item.descripcion || 'Sin descripción' }}</p>
+              <div class="destacado-meta">
+                <span>📍 {{ item.latitud }}, {{ item.longitud }}</span>
+                <span>🕐 {{ item.horario || 'Sin horario' }}</span>
+                <span>💰 {{ item.precio || 'No especificado' }}</span>
+              </div>
+              <div class="destacado-fecha">
+                <span>Agregado: {{ formatearFecha(item.created_at) }}</span>
+              </div>
+              <button class="btn-eliminar-destacado" (click)="eliminarDestacado(item.id)">
+                🗑️ Eliminar
+              </button>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <div class="empty-icon">⭐</div>
+              <p>No tienes lugares destacados</p>
+              <span class="hint">Ve al mapa, selecciona un lugar y haz clic en "Destacar"</span>
+            </div>
+          }
+        }
+      </div>
     </section>
   }
 </div>

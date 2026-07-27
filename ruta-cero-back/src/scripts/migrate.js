@@ -1,4 +1,4 @@
-import { pool } from './src/repositories/db.js';
+import { pool } from '../repositories/db.js';
 
 const runMigrations = async () => {
     try {

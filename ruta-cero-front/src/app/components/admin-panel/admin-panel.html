@@ -9,8 +9,8 @@
             <h1>Panel de Administración</h1>
         </div>
         <div class="header-right">
-            <span class="user-badge" *ngIf="adminStats()?.totalUsers">
-                {{ adminStats()?.totalUsers }} usuarios · {{ adminStats()?.adminUsers }} admins
+            <span class="user-badge" *ngIf="adminStats()?.totalUsuarios">
+                {{ adminStats()?.totalUsuarios }} usuarios · {{ adminStats()?.adminUsuarios }} admins
             </span>
         </div>
     </header>
@@ -42,6 +42,26 @@
         >
             <span class="material-icons">analytics</span>
             Estadísticas
+        </button>
+        <button 
+            role="tab" 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'graficos'"
+            (click)="setTab('graficos')"
+            [attr.aria-selected]="activeTab() === 'graficos'"
+        >
+            <span class="material-icons">show_chart</span>
+            Gráficos
+        </button>
+        <button 
+            role="tab" 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'destacados'"
+            (click)="setTab('destacados')"
+            [attr.aria-selected]="activeTab() === 'destacados'"
+        >
+            <span class="material-icons">star</span>
+            Destacados
         </button>
         <button 
             role="tab" 
@@ -79,21 +99,21 @@
                     <div class="stat-card">
                         <div class="stat-icon"><span class="material-icons">people</span></div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ adminStats()?.totalUsers || 0 }}</span>
+                            <span class="stat-value">{{ adminStats()?.totalUsuarios || 0 }}</span>
                             <span class="stat-label">Usuarios totales</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon admin"><span class="material-icons">admin_panel_settings</span></div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ adminStats()?.adminUsers || 0 }}</span>
+                            <span class="stat-value">{{ adminStats()?.adminUsuarios || 0 }}</span>
                             <span class="stat-label">Administradores</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon onboarding"><span class="material-icons">assignment_turned_in</span></div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ adminStats()?.usersWithOnboarding || 0 }}</span>
+                            <span class="stat-value">{{ adminStats()?.usuariosSinOnboarding || 0 }}</span>
                             <span class="stat-label">Onboarding completado</span>
                         </div>
                     </div>
@@ -115,7 +135,7 @@
 
                 <div class="section">
                     <h3>Usuarios recientes</h3>
-                    @if (adminStats()?.recentUsers && adminStats()!.recentUsers!.length > 0) {
+                    @if (adminStats()?.usuarios && adminStats()!.usuarios!.length > 0) {
                         <div class="data-table-container">
                             <table class="data-table">
                                 <thead>
@@ -128,7 +148,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (user of adminStats()?.recentUsers || []; track user.id) {
+                                    @for (user of adminStats()?.usuarios || []; track user.id) {
                                         <tr>
                                             <td>{{ user.nombre }}</td>
                                             <td>{{ user.email }}</td>
@@ -154,6 +174,189 @@
                 </div>
             </div>
         }
+
+<!-- GRÁFICOS TAB -->
+@if (activeTab() === 'graficos') {
+    <div class="section">
+        <div class="section-header">
+            <h2>📊 Estadísticas de Uso de API</h2>
+            <button class="btn-refresh" (click)="cargarEstadisticasAPI()" [disabled]="cargando()">
+                <span class="material-icons">refresh</span>
+                Actualizar
+            </button>
+        </div>
+
+        <!-- Stats summary -->
+        <div class="stats-summary-api">
+            <div class="stat-card mini">
+                <span class="stat-label">📱 Peticiones totales</span>
+                <span class="stat-value">{{ apiStats()?.summary?.totalPeticiones || 0 }}</span>
+            </div>
+            <div class="stat-card mini">
+                <span class="stat-label">🔑 Tokens consumidos</span>
+                <span class="stat-value">{{ apiStats()?.summary?.totalTokens || 0 }}</span>
+            </div>
+            <div class="stat-card mini">
+                <span class="stat-label">⏱️ Tiempo promedio</span>
+                <span class="stat-value">{{ apiStats()?.summary?.avgTiempo || 0 }}ms</span>
+            </div>
+            <div class="stat-card mini">
+                <span class="stat-label">✅ Tasa de éxito</span>
+                <span class="stat-value">
+                    @if ((apiStats()?.summary?.totalPeticiones || 0) > 0) {
+                        {{ Math.round(((apiStats()?.summary?.peticionesExitosas || 0) / (apiStats()?.summary?.totalPeticiones || 1)) * 100) }}%
+                    } @else {
+                        0%
+                    }
+                </span>
+            </div>
+            <div class="stat-card mini">
+                <span class="stat-label">👥 Usuarios activos</span>
+                <span class="stat-value">{{ apiStats()?.summary?.usuariosActivos || 0 }}</span>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📈 Peticiones por día</h3>
+                <div class="chart-container">
+                    <canvas #apiUsageChart></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>🔑 Tokens por día</h3>
+                <div class="chart-container">
+                    <canvas #tokensChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoints más usados -->
+        <div class="section">
+            <h3>🔌 Endpoints más usados</h3>
+            <div class="endpoints-list">
+                @if (apiStats()?.byEndpoint && apiStats()!.byEndpoint!.length > 0) {
+                    @for (endpoint of apiStats()?.byEndpoint || []; track endpoint.endpoint) {
+                        <div class="endpoint-item">
+                            <span class="endpoint-name">{{ endpoint.endpoint }}</span>
+                            <div class="endpoint-bar">
+                                <div class="endpoint-fill" [style.width.%]="(endpoint.total / (apiStats()?.byEndpoint?.[0]?.total || 1)) * 100"></div>
+                            </div>
+                            <span class="endpoint-count">{{ endpoint.total }} peticiones</span>
+                            <span class="endpoint-tokens">{{ endpoint.tokens || 0 }} tokens</span>
+                        </div>
+                    }
+                } @else {
+                    <p class="empty-state">No hay datos disponibles</p>
+                }
+            </div>
+        </div>
+
+        <!-- Estadísticas de caché -->
+        <div class="section">
+            <h3>💾 Estadísticas de Caché</h3>
+            <div class="cache-stats-api">
+                @if (apiStats()?.cache && apiStats()!.cache!.length > 0) {
+                    @for (stat of apiStats()?.cache || []; track stat.tipo + stat.accion) {
+                        <div class="cache-stat-item">
+                            <span class="cache-tipo">{{ stat.tipo }}</span>
+                            <span class="cache-accion">{{ stat.accion }}</span>
+                            <span class="cache-total">{{ stat.total }}</span>
+                        </div>
+                    }
+                } @else {
+                    <p class="empty-state">No hay datos de caché</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+ <!-- DESTACADOS TAB -->
+@if (activeTab() === 'destacados') {
+    <div class="section">
+        <div class="section-header">
+            <h2>⭐ Todos los Lugares Destacados</h2>
+            <span class="badge">{{ destacados().length }} destacados</span>
+        </div>
+
+        <div class="section-info">
+            <p class="hint">
+                💡 Aquí puedes ver todos los lugares destacados de todos los usuarios.
+            </p>
+        </div>
+
+        <!-- Grid de destacados -->
+        @if (cargandoDestacados()) {
+            <div class="loading-state">
+                <span class="spinner"></span>
+                Cargando destacados...
+            </div>
+        } @else {
+            <div class="destacados-grid-admin">
+                @for (item of destacados(); track item.id) {
+                    <div class="destacado-card-admin">
+                        <!-- Header con categoría -->
+                        <div class="card-header">
+                            <h4>{{ item.nombre }}</h4>
+                            <span class="categoria-tag">{{ item.categoria }}</span>
+                        </div>
+
+                        <!-- Descripción -->
+                        <p class="card-desc">{{ item.descripcion || 'Sin descripción' }}</p>
+
+                        <!-- Meta información -->
+                        <div class="card-meta">
+                            <div class="meta-row">
+                                <span class="meta-icon">👤</span>
+                                <span>{{ item.usuario_nombre || 'Usuario' }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-icon">📧</span>
+                                <span>{{ item.usuario_email || '' }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-icon">📍</span>
+                                <span>{{ item.latitud }}, {{ item.longitud }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-icon">🕐</span>
+                                <span>{{ item.horario || 'Sin horario' }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-icon">💰</span>
+                                <span>{{ item.precio || 'No especificado' }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-icon">📅</span>
+                                <span>{{ formatearFecha(item.created_at) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="card-actions">
+                            <button 
+                                class="btn-eliminar-destacado" 
+                                (click)="eliminarDestacado(item.id)" 
+                                title="Eliminar destacado"
+                            >
+                                <span class="material-icons">delete</span>
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                } @empty {
+                    <div class="empty-state">
+                        <div class="empty-icon">⭐</div>
+                        <p>No hay lugares destacados</p>
+                        <span class="hint">Los usuarios pueden destacar lugares desde el mapa</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
 
         <!-- CACHE TAB -->
         @if (activeTab() === 'cache') {
@@ -184,23 +387,11 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Más antigua</span>
-                        <span class="stat-value">{{ cacheStats()?.oldestEntry ? formatearFecha(cacheStats()!.oldestEntry) : '-' }}</span>
+                        <span class="stat-value">{{ cacheStats()?.entradas?.length ? formatearFecha(cacheStats()!.entradas[0].creada) : '-' }}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Más reciente</span>
-                        <span class="stat-value">{{ cacheStats()?.newestEntry ? formatearFecha(cacheStats()!.newestEntry) : '-' }}</span>
-                    </div>
-                </div>
-
-                <!-- Sources breakdown -->
-                <div class="section">
-                    <h3>Por fuente</h3>
-                    <div class="source-badges">
-                        @for (src of cacheStats()?.bySource || []; track src.source) {
-                            <span class="source-badge">
-                                {{ src.source }}: {{ src.count }}
-                            </span>
-                        }
+                        <span class="stat-value">{{ cacheStats()?.entradas?.length ? formatearFecha(cacheStats()!.entradas[cacheStats()!.entradas.length - 1].creada) : '-' }}</span>
                     </div>
                 </div>
 
@@ -236,8 +427,8 @@
                                                 <code class="cache-key">{{ entry.cacheKey }}</code>
                                             </td>
                                             <td>{{ entry.lugares }}</td>
-                                            <td>{{ formatearFecha(entry.expiresAt) }}</td>
-                                            <td>{{ formatearFecha(entry.createdAt) }}</td>
+                                            <td>{{ formatearFecha(entry.expira) }}</td>
+                                            <td>{{ formatearFecha(entry.creada) }}</td>
                                             <td>
                                                 <div class="action-buttons">
                                                     <button 

@@ -96,7 +96,8 @@
 /* ===== PANEL CONTENT ===== */
 .panel-content {
   flex: 1;
-  overflow-y: auto;
+  /* CAMBIO: Quitamos overflow-y: auto y lo forzamos a hidden */
+  overflow: hidden; 
   display: flex;
   flex-direction: column;
 }
@@ -111,6 +112,8 @@
 .discover-view {
   padding: 16px;
   gap: 16px;
+  /* CAMBIO: Le damos el scroll exclusivamente a esta vista */
+  overflow-y: auto; 
 }
 
 /* Weather card */
@@ -544,6 +547,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* CAMBIO: Evitamos que el chat se desborde */
+  overflow: hidden; 
 }
 
 /* Save bar */
@@ -556,6 +561,8 @@
   background: linear-gradient(135deg, #fef3c7, #fde68a);
   border: 1px solid #fcd34d;
   border-radius: var(--radius);
+  /* CAMBIO: Evita que la barra se aplaste cuando hay muchos mensajes */
+  flex-shrink: 0; 
 }
 
 .save-bar-info {
@@ -990,4 +997,262 @@
   .detail-info-grid {
     grid-template-columns: 1fr;
   }
+}
+/* ===== MODAL GUARDAR ITINERARIO - VERSIÓN MEJORADA ===== */
+.modal-guardar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  animation: modalFadeIn 0.3s ease;
+  padding: 20px;
+}
+
+.modal-guardar .modal-content {
+  background: #ffffff;
+  border-radius: 24px;
+  max-width: 440px;
+  width: 100%;
+  padding: 0;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+/* Header del modal */
+.modal-guardar .modal-header {
+  padding: 24px 28px 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-guardar .modal-header .modal-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.modal-guardar .modal-header .modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+.modal-guardar .modal-body {
+  padding: 8px 28px 0 28px;
+}
+
+.modal-guardar .modal-body .modal-subtitle {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.modal-guardar .modal-body .modal-hint {
+  margin: 0 0 16px 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.modal-guardar .modal-body input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1e293b;
+  background: #f8fafc;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.modal-guardar .modal-body input:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+  background: #ffffff;
+}
+
+.modal-guardar .modal-body input::placeholder {
+  color: #94a3b8;
+}
+
+/* Footer del modal */
+.modal-guardar .modal-footer {
+  padding: 20px 28px 28px 28px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+}
+
+.modal-guardar .modal-footer button {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.modal-guardar .modal-footer .btn-cancelar {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.modal-guardar .modal-footer .btn-cancelar:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.modal-guardar .modal-footer .btn-guardar {
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3);
+}
+
+.modal-guardar .modal-footer .btn-guardar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(46, 125, 50, 0.4);
+}
+
+.modal-guardar .modal-footer .btn-guardar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== TOAST NOTIFICACIÓN ===== */
+.toast-notificacion {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #ffffff;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  z-index: 100000;
+  animation: toastSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-width: 92%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.toast-notificacion.success {
+  background: #2e7d32;
+}
+
+.toast-notificacion.error {
+  background: #d32f2f;
+}
+
+.toast-notificacion.info {
+  background: #1565c0;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+/* ===== FIX DEFINITIVO PARA SCROLL DEL CHAT ===== */
+.panel-container {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.panel-content {
+  flex: 1 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.chat-view {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.messages {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  scroll-behavior: smooth !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  height: auto !important;
+  /* 👈 ESTO ES CLAVE: evita que el contenedor se estire */
+  flex-basis: 0 !important;
+}
+
+.save-bar {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+
+.input-area {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  padding: 12px 16px !important;
+  border-top: 1px solid var(--border-color, #e2e8f0) !important;
+  background: var(--panel-bg, #ffffff) !important;
 }

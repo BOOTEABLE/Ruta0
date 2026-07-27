@@ -5,6 +5,7 @@ import { Store, Lugar } from '../../services/store';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { PerfilService } from '../../services/perfil.service';
+import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-panel-lateral',
@@ -19,6 +20,7 @@ export class PanelLateral implements OnInit {
   public auth = inject(AuthService);
   private perfil = inject(PerfilService);
   private router = inject(Router);
+  private admin = inject(AdminService);
 
   @ViewChild('messagesContainer') messagesContainer?: ElementRef;
 
@@ -85,6 +87,7 @@ export class PanelLateral implements OnInit {
 
   procesandoMensaje = false;
   guardandoItinerario = false;
+  destacando = false; // 👈 AGREGAR ESTA VARIABLE
 
   miLatitud: number | null = null;
   miLongitud: number | null = null;
@@ -134,7 +137,6 @@ export class PanelLateral implements OnInit {
 
     this.cargandoGooglePlaces.set(true);
     try {
-      // Cargar un par de categorías clave en paralelo
       const categorias = ['Cafetería', 'Parque', 'Museo'];
       const resultados = await Promise.all(
         categorias.map(cat => this.perfil.obtenerLugaresGoogle(cat, this.miLatitud!, this.miLongitud!, 5000).toPromise())
@@ -142,7 +144,7 @@ export class PanelLateral implements OnInit {
 
       const lugaresGoogle = resultados
         .flatMap(r => r?.lugares || [])
-        .filter((l, i, arr) => arr.findIndex(x => x.id === l.id) === i) // deduplicar por id
+        .filter((l, i, arr) => arr.findIndex(x => x.id === l.id) === i)
         .slice(0, 10);
 
       if (lugaresGoogle.length > 0) {
@@ -158,7 +160,6 @@ export class PanelLateral implements OnInit {
 
   cambiarVista(nuevaVista: 'descubrir' | 'chat' | 'detalle') {
     this.store.vistaActual.set(nuevaVista);
-    // Al ir a Descubrir, intentar cargar Google Places si no hay recomendaciones reales
     if (nuevaVista === 'descubrir' && this.lugaresRecomendados().length === 0) {
       setTimeout(() => this.cargarGooglePlaces(), 100);
     }
@@ -185,11 +186,12 @@ export class PanelLateral implements OnInit {
     return this.lugaresDefault;
   }
 
-  centrarMapa(lugar: Lugar) {
-    this.store.lugarSeleccionado.set(lugar);
-    this.store.vistaActual.set('descubrir');
-  }
-
+  centrarMapa(lugar: Lugar | null) {
+    if (lugar) {
+        this.store.lugarSeleccionado.set(lugar);
+        this.store.vistaActual.set('descubrir');
+    }
+}
   getCategoryGradient(categoria?: string): string {
     return this.categoryGradients[categoria || ''] || 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #5eead4 100%)';
   }
@@ -206,13 +208,15 @@ export class PanelLateral implements OnInit {
     }, 100);
   }
 
-  preguntarPorLugar(lugar: Lugar) {
-    const mensaje = `Cuéntame más sobre ${lugar.nombre} en Quito`;
-    this.cambiarVista('chat');
-    setTimeout(() => {
-      this.enviarTextoDirecto(mensaje);
-    }, 100);
-  }
+ preguntarPorLugar(lugar: Lugar | null) {
+    if (lugar) {
+        const mensaje = `Cuéntame más sobre ${lugar.nombre} en Quito`;
+        this.cambiarVista('chat');
+        setTimeout(() => {
+            this.enviarTextoDirecto(mensaje);
+        }, 100);
+    }
+}
 
   private enviarTextoDirecto(texto: string) {
     this.historial.update(h => [...h, { emisor: 'usuario', texto }]);
@@ -266,23 +270,166 @@ export class PanelLateral implements OnInit {
     } catch {}
   }
 
-  async guardarItinerarioActual() {
-    const lugares = this.lugaresRecomendados();
-    if (!lugares || lugares.length === 0) return;
+  // 👈 MÉTODO PARA DESTACAR LUGAR
+  async destacarLugar(lugar: any) {
+    if (!lugar) {
+      this.mostrarToast('No hay lugar seleccionado', 'error');
+      return;
+    }
+    
+    this.destacando = true;
+    try {
+      // Verificar si ya está destacado por este usuario
+      const destacados = await this.admin.getMisDestacados().toPromise();
+      if (destacados?.destacados?.some((d: any) => d.nombre === lugar.nombre)) {
+        this.mostrarToast('⚠️ Este lugar ya está en tus destacados', 'info');
+        return;
+      }
 
-    const nombre = prompt('¿Cómo quieres llamar a este itinerario?', 'Mi plan');
-    if (!nombre?.trim()) return;
+      await this.admin.createDestacado({
+        nombre: lugar.nombre,
+        categoria: lugar.categoria || 'General',
+        descripcion: lugar.descripcion || 'Lugar destacado desde el mapa',
+        latitud: Number(lugar.latitud),
+        longitud: Number(lugar.longitud),
+        direccion: lugar.direccion || lugar.vicinity || '',
+        horario: lugar.horario || '',
+        precio: lugar.precio || '',
+        imagen_url: lugar.photoUrl || ''
+      }).toPromise();
+      
+      this.mostrarToast('⭐ Lugar destacado guardado exitosamente', 'success');
+    } catch (err: any) {
+      console.error('❌ Error destacando lugar:', err);
+      this.mostrarToast(err.error?.error || 'Error al destacar el lugar', 'error');
+    } finally {
+      this.destacando = false;
+    }
+  }
+
+  // 👈 MÉTODO guardarItinerarioActual
+  async guardarItinerarioActual() {
+    console.log('🔵 guardarItinerarioActual() ejecutado');
+    
+    const lugares = this.lugaresRecomendados();
+    console.log('📦 Lugares:', lugares);
+    
+    if (!lugares || lugares.length === 0) {
+        this.mostrarToast('No hay lugares para guardar');
+        return;
+    }
+
+    this.mostrarModalGuardar();
+  }
+
+  mostrarModalGuardar() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-guardar';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon">💾</span>
+                <h3 class="modal-title">Guardar Itinerario</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle">¿Cómo quieres llamar a este itinerario?</p>
+                <p class="modal-hint">Ej: "Mi plan en Quito", "Ruta de cafés", etc.</p>
+                <input 
+                    id="nombreItinerario" 
+                    type="text" 
+                    value="Mi plan" 
+                    placeholder="Escribe un nombre..."
+                    autofocus
+                >
+            </div>
+            <div class="modal-footer">
+                <button id="btnCancelar" class="btn-cancelar">Cancelar</button>
+                <button id="btnGuardar" class="btn-guardar">💾 Guardar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('#nombreItinerario') as HTMLInputElement;
+    input.focus();
+    input.select();
+
+    const guardar = () => {
+        const nombre = input.value.trim();
+        if (nombre) {
+            modal.remove();
+            this.ejecutarGuardado(nombre);
+        }
+    };
+
+    const cancelar = () => {
+        modal.remove();
+        this.mostrarToast('Guardado cancelado', 'info');
+    };
+
+    modal.querySelector('#btnGuardar')?.addEventListener('click', guardar);
+    modal.querySelector('#btnCancelar')?.addEventListener('click', cancelar);
+    
+    input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') guardar();
+        if (e.key === 'Escape') cancelar();
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) cancelar();
+    });
+  }
+
+  async ejecutarGuardado(nombre: string) {
+    const lugares = this.lugaresRecomendados();
+    if (!lugares || lugares.length === 0) {
+        this.mostrarToast('No hay lugares para guardar');
+        return;
+    }
 
     this.guardandoItinerario = true;
     try {
-      const lugaresIds = lugares.map(l => l.id).filter((id): id is number => id != null);
-      await this.perfil.guardarItinerario({ nombre: nombre.trim(), descripcion: null, lugaresIds }).toPromise();
-      alert('¡Itinerario guardado! Lo verás en tu perfil.');
+        const lugaresIds = lugares
+            .map(l => l.id)
+            .filter((id): id is number => id != null);
+
+        if (lugaresIds.length === 0) {
+            this.mostrarToast('No se pudieron obtener los IDs de los lugares');
+            return;
+        }
+
+        await this.perfil.guardarItinerario({
+            nombre: nombre,
+            descripcion: 'Itinerario guardado desde el chat',
+            lugaresIds: lugaresIds
+        }).toPromise();
+
+        this.mostrarToast(`✅ "${nombre}" guardado con ${lugaresIds.length} lugares`, 'success');
+        
+        this.store.lugaresRecomendados.set([]);
+        
     } catch (err: any) {
-      alert(err.error?.error || 'Error al guardar el itinerario');
+        console.error('❌ Error guardando itinerario:', err);
+        this.mostrarToast(err.error?.error || '❌ Error al guardar el itinerario', 'error');
     } finally {
-      this.guardandoItinerario = false;
+        this.guardandoItinerario = false;
     }
+  }
+
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
+    const toastsExistentes = document.querySelectorAll('.toast-notificacion');
+    toastsExistentes.forEach(t => t.remove());
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notificacion ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3500);
   }
 
   formatearMensaje(texto: string): string {

@@ -40,12 +40,18 @@ export const actualizarPreferencias = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
-
 export const listarItinerarios = async (req, res) => {
     try {
         const usuarioId = req.user.id;
         const itinerarios = await getItinerarios(usuarioId);
-        res.json({ itinerarios });
+        
+        // 👈 Asegurar que cada itinerario tenga lugaresIds
+        const itinerariosConIds = itinerarios.map(it => ({
+            ...it,
+            lugaresIds: it.lugares_ids || it.lugaresIds || []
+        }));
+        
+        res.json({ itinerarios: itinerariosConIds });
     } catch (error) {
         console.error('❌ Error listando itinerarios:', error.message);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -62,7 +68,13 @@ export const obtenerItinerario = async (req, res) => {
             return res.status(404).json({ error: 'Itinerario no encontrado' });
         }
 
-        res.json({ itinerario });
+        // 👈 Asegurar que devuelve lugaresIds
+        res.json({ 
+            itinerario: {
+                ...itinerario,
+                lugaresIds: itinerario.lugares_ids || itinerario.lugaresIds || []
+            }
+        });
     } catch (error) {
         console.error('❌ Error obteniendo itinerario:', error.message);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -79,7 +91,18 @@ export const saveItinerario = async (req, res) => {
         }
 
         const itinerario = await saveItinerarioService(usuarioId, { nombre, descripcion, lugaresIds });
-        res.status(201).json({ itinerario });
+        
+        // 👈 Asegurar que devuelve lugaresIds correctamente
+        res.status(201).json({ 
+            itinerario: {
+                id: itinerario.id,
+                nombre: itinerario.nombre,
+                descripcion: itinerario.descripcion,
+                lugaresIds: itinerario.lugares_ids || lugaresIds || [], // 👈 ESTO ES CLAVE
+                createdAt: itinerario.created_at,
+                updatedAt: itinerario.updated_at
+            }
+        });
     } catch (error) {
         console.error('❌ Error guardando itinerario:', error.message);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -160,7 +183,22 @@ export const completeOnboarding = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        res.json({ user });
+        
+        console.log('🔵 Onboarding completado para usuario:', user.email);
+        console.log('🔵 Rol del usuario:', user.rol);
+        
+        // 👈 Asegurar que devuelve TODOS los campos necesarios
+        res.json({ 
+            user: {
+                id: user.id,
+                email: user.email,
+                nombre: user.nombre,
+                rol: user.rol || 'user', // 👈 ESTO ES CLAVE
+                onboarding_completado: user.onboarding_completado || true,
+                created_at: user.created_at
+            },
+            onboardingCompletado: true 
+        });
     } catch (error) {
         console.error('❌ Error completando onboarding:', error.message);
         res.status(500).json({ error: 'Error interno del servidor' });

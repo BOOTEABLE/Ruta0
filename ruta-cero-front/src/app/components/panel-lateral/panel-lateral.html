@@ -27,10 +27,11 @@
       <button class="icon-btn perfil-btn" (click)="irAPerfil()" title="Mi Perfil">
         <span class="material-icons">person</span>
       </button>
+<!-- En panel-lateral.html -->
       @if (auth.isAdmin()) {
-        <button class="icon-btn admin-btn" (click)="irAAdmin()" title="Panel de Administración">
-          <span class="material-icons">admin_panel_settings</span>
-        </button>
+    <button class="icon-btn admin-btn" (click)="irAAdmin()" title="Panel Admin">
+        🛡️
+    </button>
       }
       <button class="icon-btn logout-btn" (click)="logout()" title="Cerrar sesión">
         <span class="material-icons">logout</span>
@@ -151,142 +152,154 @@
       </div>
     }
 
-    <!-- ===== CHAT VIEW ===== -->
-    @if (vista() === 'chat') {
-      <div class="view chat-view">
-        <!-- Save itinerary bar -->
-        @if (lugaresRecomendados().length > 0) {
-          <div class="save-bar">
-            <div class="save-bar-info">
-              <span class="material-icons save-bar-icon">map</span>
-              <span>{{ lugaresRecomendados().length }} lugares en el mapa</span>
-            </div>
-            <button class="btn-save" (click)="guardarItinerarioActual()" [disabled]="guardandoItinerario">
-              @if (guardandoItinerario) {
-                <span class="spinner-sm"></span>
-              } @else {
-                <span class="material-icons btn-icon">bookmark</span>
-              }
-              Guardar
-            </button>
-          </div>
-        }
-
-        <!-- Messages -->
-        <div class="messages" #messagesContainer>
-          @for (msg of historial(); track $index) {
-            <div class="msg-row" [class.msg-user]="msg.emisor === 'usuario'">
-              @if (msg.emisor === 'bot') {
-                <div class="msg-avatar bot-avatar">R0</div>
-              }
-              <div class="msg-bubble" [class.bot]="msg.emisor === 'bot'" [class.user]="msg.emisor === 'usuario'">
-                <span [innerHTML]="formatearMensaje(msg.texto)"></span>
-              </div>
-              @if (msg.emisor === 'usuario') {
-                <div class="msg-avatar user-avatar">
-                  <span class="material-icons">person</span>
-                </div>
-              }
-            </div>
-          }
-          @if (procesandoMensaje) {
-            <div class="msg-row">
-              <div class="msg-avatar bot-avatar">R0</div>
-              <div class="msg-bubble bot typing-indicator">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-              </div>
-            </div>
-          }
+<!-- CHAT VIEW -->
+@if (vista() === 'chat') {
+  <div class="view chat-view">
+    <!-- Save bar - FIJADO ARRIBA -->
+    @if (lugaresRecomendados().length > 0) {
+      <div class="save-bar">
+        <div class="save-bar-info">
+          <span class="material-icons save-bar-icon">map</span>
+          <span>{{ lugaresRecomendados().length }} lugares en el mapa</span>
         </div>
-
-        <!-- Input -->
-        <div class="input-area">
-          <div class="input-wrapper-chat">
-            <input
-              #chatInput
-              type="text"
-              placeholder="Ej: Tengo $20 y 3 horas..."
-              (keydown.enter)="enviarMensaje(chatInput.value, chatInput); $event.preventDefault()"
-              [disabled]="procesandoMensaje"
-            />
-            <button
-              class="btn-send"
-              (click)="enviarMensaje(chatInput.value, chatInput)"
-              [disabled]="procesandoMensaje || !chatInput.value?.trim()"
-              aria-label="Enviar mensaje"
-            >
-              <span class="material-icons">send</span>
-            </button>
-          </div>
-        </div>
+        <button class="btn-save" (click)="guardarItinerarioActual()" [disabled]="guardandoItinerario">
+          @if (guardandoItinerario) {
+            <span class="spinner-sm"></span>
+          } @else {
+            <span class="material-icons btn-icon">bookmark</span>
+          }
+          Guardar
+        </button>
       </div>
     }
 
-    <!-- ===== DETALLE VIEW ===== -->
-    @if (vista() === 'detalle' && lugarSeleccionado(); as lugar) {
-      <div class="view detail-view">
+    <!-- Messages container - CON SCROLL -->
+    <div class="messages" #messagesContainer>
+      @for (msg of historial(); track $index) {
+        <div class="msg-row" [class.msg-user]="msg.emisor === 'usuario'">
+          <div class="msg-avatar" [class.bot-avatar]="msg.emisor === 'bot'" [class.user-avatar]="msg.emisor === 'usuario'">
+            @if (msg.emisor === 'bot') { 🤖 } @else { 👤 }
+          </div>
+          <div class="msg-bubble" [class.bot]="msg.emisor === 'bot'" [class.user]="msg.emisor === 'usuario'">
+            <div [innerHTML]="formatearMensaje(msg.texto)"></div>
+          </div>
+        </div>
+      }
+      @if (procesandoMensaje) {
+        <div class="msg-row">
+          <div class="msg-avatar bot-avatar">🤖</div>
+          <div class="msg-bubble bot typing-indicator">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Input area - FIJADO ABAJO -->
+    <div class="input-area">
+      <div class="input-wrapper-chat">
+        <input 
+          #chatInput
+          type="text" 
+          placeholder="Ej: Tengo $20 y 3 horas..." 
+          (keyup.enter)="enviarMensaje(chatInput.value, chatInput)"
+          [disabled]="procesandoMensaje"
+        >
+        <button 
+          class="btn-send" 
+          (click)="enviarMensaje(chatInput.value, chatInput)"
+          [disabled]="procesandoMensaje || !chatInput.value.trim()"
+        >
+          <span class="material-icons">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===== DETAIL VIEW ===== -->
+@if (vista() === 'detalle' && lugarSeleccionado()) {
+    <div class="view detail-view">
+        <!-- Botón de volver -->
         <button class="btn-back" (click)="cambiarVista('descubrir')">
-          <span class="material-icons">arrow_back</span>
-          Volver
+            <span class="material-icons">arrow_back</span>
+            Volver
         </button>
 
-        <div class="detail-hero" [style.background]="getCategoryGradient(lugar.categoria)">
-          <div class="detail-hero-overlay"></div>
-          <div class="detail-hero-content">
-            <span class="detail-category-badge">{{ lugar.categoria }}</span>
-            <h2 class="detail-title">{{ lugar.nombre }}</h2>
-          </div>
+        <!-- Hero del lugar -->
+        <div class="detail-hero" [style.background]="getCategoryGradient(lugarSeleccionado()?.categoria)">
+            <div class="detail-hero-overlay"></div>
+            <div class="detail-hero-content">
+                <span class="detail-category-badge">{{ lugarSeleccionado()?.categoria }}</span>
+                <h2 class="detail-title">{{ lugarSeleccionado()?.nombre }}</h2>
+            </div>
         </div>
 
+        <!-- Cuerpo del detalle -->
         <div class="detail-body">
-          <p class="detail-desc">{{ lugar.descripcion }}</p>
+            <p class="detail-desc">{{ lugarSeleccionado()?.descripcion || 'Sin descripción disponible' }}</p>
+            
+            <div class="detail-info-grid">
+                <div class="info-item">
+                    <span class="info-icon">📍</span>
+                    <div>
+                        <span class="info-label">Ubicación</span>
+                        <span class="info-value">Quito, Ecuador</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🕐</span>
+                    <div>
+                        <span class="info-label">Horario</span>
+                        <span class="info-value">{{ lugarSeleccionado()?.horario || 'Horario no disponible' }}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">💰</span>
+                    <div>
+                        <span class="info-label">Presupuesto</span>
+                        <span class="info-value">{{ lugarSeleccionado()?.precio || 'No especificado' }}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🏷️</span>
+                    <div>
+                        <span class="info-label">Categoría</span>
+                        <span class="info-value">{{ lugarSeleccionado()?.categoria || 'General' }}</span>
+                    </div>
+                </div>
+            </div>
 
-          <div class="detail-info-grid">
-            <div class="info-item">
-              <span class="material-icons info-icon">location_on</span>
-              <div>
-                <span class="info-label">Ubicación</span>
-                <span class="info-value">Quito, Ecuador</span>
-              </div>
-            </div>
-            <div class="info-item">
-              <span class="material-icons info-icon">schedule</span>
-              <div>
-                <span class="info-label">Horario</span>
-                <span class="info-value">{{ lugar.horario || '09:00 – 19:00' }}</span>
-              </div>
-            </div>
-            <div class="info-item">
-              <span class="material-icons info-icon">attach_money</span>
-              <div>
-                <span class="info-label">Presupuesto</span>
-                <span class="info-value">{{ lugar.precio || 'Económico' }}</span>
-              </div>
-            </div>
-            <div class="info-item">
-              <span class="material-icons info-icon">category</span>
-              <div>
-                <span class="info-label">Categoría</span>
-                <span class="info-value">{{ lugar.categoria }}</span>
-              </div>
-            </div>
-          </div>
+            <!-- Acciones -->
+            <div class="detail-actions">
+                <button class="btn-primary" (click)="centrarMapa(lugarSeleccionado()!)">
+                    🗺️ Ver en el mapa
+                </button>
+                
+                <button class="btn-secondary" (click)="preguntarPorLugar(lugarSeleccionado()!)">
+                    🤖 Preguntar a la IA
+                </button>
 
-          <div class="detail-actions">
-            <button class="btn-primary" (click)="centrarMapa(lugar)">
-              <span class="material-icons">visibility</span>
-              Ver en el mapa
-            </button>
-            <button class="btn-secondary" (click)="preguntarPorLugar(lugar)">
-              <span class="material-icons">chat</span>
-              Preguntar a la IA
-            </button>
-          </div>
+                <!-- Botón Destacar (solo para usuarios autenticados) -->
+                @if (auth.isAuthenticated()) {
+                    <button 
+                        class="btn-destacar" 
+                        (click)="destacarLugar(lugarSeleccionado()!)" 
+                        [disabled]="destacando"
+                    >
+                        @if (destacando) {
+                            <span class="spinner-sm"></span>
+                        } @else {
+                            <span class="material-icons">star</span>
+                        }
+                        ⭐ Destacar lugar
+                    </button>
+                }
+            </div>
         </div>
-      </div>
-    }
-
+    </div>
+}
   </div>
 </div>
