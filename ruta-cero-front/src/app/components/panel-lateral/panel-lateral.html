@@ -62,12 +62,23 @@
             }
           </div>
           <div class="cards-grid">
-            @for (lugar of lugaresRecomendados().length > 0 ? lugaresRecomendados() : usarDefaultLugares(); track lugar.id ?? $index) {
+            @if (cargandoGooglePlaces() && lugaresRecomendados().length === 0) {
+              <div class="places-loading">
+                <span class="spinner"></span>
+                Cargando lugares de Google...
+              </div>
+            } @else {
+              @for (lugar of lugaresRecomendados().length > 0 ? lugaresRecomendados() : usarDefaultLugares(); track lugar.id ?? $index) {
               <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
-                <div class="card-image" [style.background]="getCategoryGradient(lugar.categoria)">
+                <div class="card-image" 
+                     [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
+                     [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">
                   <div class="card-image-overlay"></div>
                   <span class="card-category-badge">{{ lugar.categoria }}</span>
                   <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
+                  @if (lugar.photoUrl) {
+                    <span class="card-source-badge" title="Foto de Google Places">📸</span>
+                  }
                 </div>
                 <div class="card-body">
                   <h3 class="card-title">{{ lugar.nombre }}</h3>
@@ -81,6 +92,7 @@
                   </div>
                 </div>
               </article>
+            }
             }
           </div>
         </section>

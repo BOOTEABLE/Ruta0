@@ -48,23 +48,21 @@ export const getRecomendaciones = async (usuarioId, lat, lng, radio = RADIO_BUSQ
     let categoriasInteres = preferencias?.categorias_favoritas || [];
     let categoriasEvitar = preferencias?.categorias_evitadas || [];
 
-    const condicionCategoriaInteres = categoriasInteres.length > 0
-        ? `AND categoria ILIKE ANY($3)`
-        : '';
-    const condicionCategoriaEvitar = categoriasEvitar.length > 0
-        ? `AND categoria NOT ILIKE ANY($4)`
-        : '';
-
+    // Usar IN / NOT IN con placeholders dinámicos - evita problemas con ANY/ALL
     const params = [lng, lat, radio];
+    let categoriaFilter = '';
     let paramIndex = 4;
 
     if (categoriasInteres.length > 0) {
-        params.push(categoriasInteres);
-        paramIndex++;
+        const placeholders = categoriasInteres.map((_, i) => `$${paramIndex++}`).join(', ');
+        params.push(...categoriasInteres.map(c => c.toLowerCase()));
+        categoriaFilter += ` AND lower(categoria) IN (${placeholders})`;
     }
+
     if (categoriasEvitar.length > 0) {
-        params.push(categoriasEvitar);
-        paramIndex++;
+        const placeholders = categoriasEvitar.map((_, i) => `$${paramIndex++}`).join(', ');
+        params.push(...categoriasEvitar.map(c => c.toLowerCase()));
+        categoriaFilter += ` AND lower(categoria) NOT IN (${placeholders})`;
     }
 
     const query = `
@@ -75,8 +73,7 @@ export const getRecomendaciones = async (usuarioId, lat, lng, radio = RADIO_BUSQ
             ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
             $3
         )
-        ${condicionCategoriaInteres}
-        ${condicionCategoriaEvitar}
+        ${categoriaFilter}
         ORDER BY ubicacion <-> ST_SetSRID(ST_MakePoint($1, $2), 4326), confianza DESC
         LIMIT 15;
     `;

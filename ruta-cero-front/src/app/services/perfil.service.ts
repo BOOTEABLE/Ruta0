@@ -23,7 +23,7 @@ export interface ItinerarioConLugares extends Itinerario {
 }
 
 export interface Lugar {
-  id: number;
+  id: number | string;
   nombre: string;
   categoria: string;
   precio: string | null;
@@ -33,6 +33,10 @@ export interface Lugar {
   ubicacion?: any;
   horario: string | null;
   confianza: number | null;
+  photoUrl?: string;
+  rating?: number;
+  userRatingCount?: number;
+  source?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -77,5 +81,15 @@ export class PerfilService {
     params.set('lng', lng.toString());
     if (radio) params.set('radio', radio.toString());
     return this.http.get<{ respuesta: string; lugaresFisicos: Lugar[] }>(`${this.API}/perfil/recomendaciones?${params}`);
+  }
+
+  // Google Places
+  obtenerLugaresGoogle(categoria: string, lat: number, lng: number, radio?: number) {
+    const params = new URLSearchParams();
+    params.set('categoria', categoria);
+    params.set('lat', lat.toString());
+    params.set('lng', lng.toString());
+    if (radio) params.set('radio', radio.toString());
+    return this.http.get<{ lugares: Lugar[] }>(`${this.API}/places/lugares?${params}`);
   }
 }

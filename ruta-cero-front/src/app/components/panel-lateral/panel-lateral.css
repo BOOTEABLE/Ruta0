@@ -212,6 +212,30 @@
   gap: 14px;
 }
 
+.places-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.places-loading .spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Place card */
 .place-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -272,6 +296,57 @@
   left: 12px;
   font-size: 1.75rem;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.card-source-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.9);
+  padding: 2px 6px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+/* Loading indicator for Google Places */
+.places-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.places-loading .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.card-source-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.75rem;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: #fff;
+}
+
+/* Card image with photo */
+.card-image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Card body */

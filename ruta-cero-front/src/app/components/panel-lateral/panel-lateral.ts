@@ -26,7 +26,10 @@ export class PanelLateral implements OnInit {
   lugarSeleccionado = this.store.lugarSeleccionado;
   historial = this.store.historialChat;
   lugaresRecomendados = this.store.lugaresRecomendados;
+  cargandoGooglePlaces = signal(false);
   mostrandoDefaults = signal(true);
+
+  // Default places shown when no API data is available
   lugaresDefault: Lugar[] = [
     {
       id: 0,
@@ -79,6 +82,7 @@ export class PanelLateral implements OnInit {
       horario: '09:30 – 17:30'
     }
   ];
+
   procesandoMensaje = false;
   guardandoItinerario = false;
 
@@ -123,8 +127,41 @@ export class PanelLateral implements OnInit {
     }
   }
 
+  // Cargar lugares de Google Places cuando se abre Descubrir
+  async cargarGooglePlaces() {
+    if (this.cargandoGooglePlaces() || this.lugaresRecomendados().length > 0) return;
+    if (this.miLatitud === null || this.miLongitud === null) return;
+
+    this.cargandoGooglePlaces.set(true);
+    try {
+      // Cargar un par de categorías clave en paralelo
+      const categorias = ['Cafetería', 'Parque', 'Museo'];
+      const resultados = await Promise.all(
+        categorias.map(cat => this.perfil.obtenerLugaresGoogle(cat, this.miLatitud!, this.miLongitud!, 5000).toPromise())
+      );
+
+      const lugaresGoogle = resultados
+        .flatMap(r => r?.lugares || [])
+        .filter((l, i, arr) => arr.findIndex(x => x.id === l.id) === i) // deduplicar por id
+        .slice(0, 10);
+
+      if (lugaresGoogle.length > 0) {
+        this.mostrandoDefaults.set(false);
+        this.store.lugaresRecomendados.set(lugaresGoogle as any);
+      }
+    } catch (err) {
+      console.warn('No se pudieron cargar lugares de Google Places:', err);
+    } finally {
+      this.cargandoGooglePlaces.set(false);
+    }
+  }
+
   cambiarVista(nuevaVista: 'descubrir' | 'chat' | 'detalle') {
     this.store.vistaActual.set(nuevaVista);
+    // Al ir a Descubrir, intentar cargar Google Places si no hay recomendaciones reales
+    if (nuevaVista === 'descubrir' && this.lugaresRecomendados().length === 0) {
+      setTimeout(() => this.cargarGooglePlaces(), 100);
+    }
   }
 
   irAPerfil() {
@@ -200,7 +237,7 @@ export class PanelLateral implements OnInit {
             latitud: Number(lugar.latitud),
             longitud: Number(lugar.longitud)
           }));
-          this.store.lugaresRecomendados.set(lugaresConNumeros);
+          this.store.lugaresRecomendados.set(lugaresConNumeros as any);
         } else {
           this.mostrandoDefaults.set(false);
           this.store.lugaresRecomendados.set([]);

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import chatRoutes from './src/routes/chat.routes.js';
 import authRoutes from './src/routes/auth.routes.js';
 import perfilRoutes from './src/routes/perfil.routes.js';
+import placesRoutes from './src/routes/places.routes.js';
 import { authenticateToken } from './src/middleware/auth.middleware.js';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', authenticateToken, chatRoutes);
 app.use('/api/perfil', authenticateToken, perfilRoutes);
+app.use('/api/places', authenticateToken, placesRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor backend corriendo en http://localhost:${PORT}`);
