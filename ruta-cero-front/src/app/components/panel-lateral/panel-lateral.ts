@@ -280,10 +280,25 @@ export class PanelLateral implements OnInit {
     }
   }
 
-  eliminarItinerario(id: number, event: Event) {
-    event.stopPropagation();
-    if (!confirm('¿Eliminar este itinerario?')) return;
+  itinerarioAEliminar = signal<number | null>(null);
 
+  confirmarEliminar(id: number, event: Event) {
+    event.stopPropagation();
+    this.itinerarioAEliminar.set(id);
+  }
+
+  cancelarEliminar() {
+    this.itinerarioAEliminar.set(null);
+  }
+
+  ejecutarEliminar() {
+    const id = this.itinerarioAEliminar();
+    if (id === null) return;
+    this.itinerarioAEliminar.set(null);
+    this.eliminarItinerario(id);
+  }
+
+  private eliminarItinerario(id: number) {
     this.perfil.eliminarItinerario(id).subscribe({
       next: () => {
         this.itinerarios.update(arr => arr.filter(i => i.id !== id));

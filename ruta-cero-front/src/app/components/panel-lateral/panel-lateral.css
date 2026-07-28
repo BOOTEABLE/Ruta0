@@ -808,6 +808,87 @@
   transform: translateX(16px);
 }
 
+/* ─── MODAL ELIMINAR ──────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  background: var(--bg-card, #ffffff);
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  text-align: center;
+}
+
+.modal-icon {
+  font-size: 2.5rem;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+.modal-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  font-family: inherit;
+}
+
+.modal-btn:active {
+  transform: scale(0.96);
+}
+
+.modal-btn-cancel {
+  background: var(--border-color, #e2e8f0);
+  color: var(--text-primary, #1e293b);
+}
+
+.modal-btn-cancel:hover {
+  background: #cbd5e1;
+}
+
+.modal-btn-delete {
+  background: #dc2626;
+  color: #fff;
+}
+
+.modal-btn-delete:hover {
+  background: #b91c1c;
+}
+
 /* ─── SCROLLBAR ────────────────────────────────── */
 .panel-body::-webkit-scrollbar,
 .messages::-webkit-scrollbar {

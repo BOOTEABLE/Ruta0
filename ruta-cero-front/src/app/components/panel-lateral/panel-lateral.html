@@ -224,7 +224,7 @@
                 <span class="itinerario-meta">{{ it.lugares?.length || it.lugaresIds?.length || 0 }} lugares · {{ formatearFecha(it.createdAt) }}</span>
               </div>
               <div class="itinerario-actions">
-                <button class="btn-delete" (click)="eliminarItinerario(it.id, $event)" title="Eliminar">🗑️</button>
+                <button class="btn-delete" (click)="confirmarEliminar(it.id, $event)" title="Eliminar">🗑️</button>
               </div>
             </div>
 
@@ -287,6 +287,21 @@
           <span>Panel de administración</span>
         </button>
       }
+    </div>
+  }
+
+  <!-- ======================== MODAL ELIMINAR ======================== -->
+  @if (itinerarioAEliminar() !== null) {
+    <div class="modal-overlay" (click)="cancelarEliminar()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <span class="modal-icon material-icons">delete_forever</span>
+        <h3 class="modal-title">Eliminar ruta</h3>
+        <p class="modal-text">¿Estás seguro de que deseas eliminar este itinerario? Esta acción no se puede deshacer.</p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" (click)="cancelarEliminar()">Cancelar</button>
+          <button class="modal-btn modal-btn-delete" (click)="ejecutarEliminar()">Eliminar</button>
+        </div>
+      </div>
     </div>
   }
 

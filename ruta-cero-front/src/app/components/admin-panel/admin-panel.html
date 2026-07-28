@@ -63,6 +63,7 @@
             <span class="material-icons">star</span>
             Destacados
         </button>
+        <!--
         <button 
             role="tab" 
             class="tab-btn" 
@@ -73,6 +74,7 @@
             <span class="material-icons">storage</span>
             Caché
         </button>
+        -->
         <button 
             role="tab" 
             class="tab-btn" 
@@ -359,96 +361,13 @@
 }
 
         <!-- CACHE TAB -->
+<!--
         @if (activeTab() === 'cache') {
             <div class="section">
-                <div class="section-header">
-                    <h2>Gestión de Caché</h2>
-                    <div class="cache-actions">
-                        <button class="btn btn-danger" (click)="limpiarCache()" [disabled]="cargando()">
-                            <span class="material-icons">delete_sweep</span>
-                            Limpiar toda la caché
-                        </button>
-                        <button class="btn btn-primary" (click)="cargarCacheStats()" [disabled]="cargando()">
-                            <span class="material-icons">refresh</span>
-                            Actualizar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Cache Stats -->
-                <div class="cache-stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-label">Entradas totales</span>
-                        <span class="stat-value">{{ cacheStats()?.totalEntradas || 0 }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Lugares totales</span>
-                        <span class="stat-value">{{ cacheStats()?.totalLugares || 0 }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Más antigua</span>
-                        <span class="stat-value">{{ cacheStats()?.entradas?.length ? formatearFecha(cacheStats()!.entradas[0].creada) : '-' }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Más reciente</span>
-                        <span class="stat-value">{{ cacheStats()?.entradas?.length ? formatearFecha(cacheStats()!.entradas[cacheStats()!.entradas.length - 1].creada) : '-' }}</span>
-                    </div>
-                </div>
-
-                <!-- Cache Entries Table -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>Entradas de Caché ({{ cacheTotal() }} total)</h3>
-                    </div>
-                    
-                    @if (cargando() && cacheEntries().length === 0) {
-                        <div class="loading-state">
-                            <span class="spinner"></span>
-                            Cargando entradas de caché...
-                        </div>
-                    } @else if (cacheEntries().length === 0) {
-                        <p class="empty-state">No hay entradas en caché</p>
-                    } @else {
-                        <div class="data-table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Clave</th>
-                                        <th>Lugares</th>
-                                        <th>Expira</th>
-                                        <th>Creada</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (entry of cacheEntries(); track entry.cacheKey) {
-                                        <tr>
-                                            <td>
-                                                <code class="cache-key">{{ entry.cacheKey }}</code>
-                                            </td>
-                                            <td>{{ entry.lugares }}</td>
-                                            <td>{{ formatearFecha(entry.expira) }}</td>
-                                            <td>{{ formatearFecha(entry.creada) }}</td>
-                                            <td>
-                                                <div class="action-buttons">
-                                                    <button 
-                                                        class="btn-icon btn-delete" 
-                                                        (click)="eliminarCacheEntry(entry.cacheKey)"
-                                                        title="Eliminar entrada"
-                                                    >
-                                                        <span class="material-icons">delete</span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
+                ...
             </div>
         }
+        -->
 
         <!-- USERS TAB -->
         @if (activeTab() === 'users') {
