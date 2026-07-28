@@ -1,7 +1,7 @@
 <div class="chat-area">
   <div class="chat-messages" #messagesContainer>
     @for (msg of historial(); track $index) {
-      <div class="chat-msg" [class.msg-user]="msg.emisor === 'usuario'">
+      <div class="chat-msg" [class.msg-user]="msg.emisor === 'usuario'" [class.msg-bot]="msg.emisor === 'bot'">
         <div class="chat-bubble" [class.bot]="msg.emisor === 'bot'" [class.user]="msg.emisor === 'usuario'">
           @if (msg.emisor === 'bot') {
             <span class="chat-emoji">🤖</span>
@@ -16,31 +16,31 @@
           }
         </div>
         @if (!msg.pensando && msg.emisor === 'bot' && msg.lugares && msg.lugares.length > 0) {
-          <div class="chat-inline-cards">
+          <div class="lugares-carousel">
             @for (lugar of msg.lugares; track $index) {
-              <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
-                <div class="card-image"
+              <article class="lugar-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
+                <div class="lugar-card-image"
                      [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
                      [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">
-                  <div class="card-image-overlay"></div>
-                  <span class="card-category-badge">{{ lugar.categoria }}</span>
-                  <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
-                  <button class="btn-fav" (click)="destacarLugar(lugar); $event.stopPropagation()" title="Destacar lugar">
+                  <div class="lugar-card-overlay"></div>
+                  <span class="lugar-card-badge">{{ lugar.categoria }}</span>
+                  <span class="lugar-card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
+                  <button class="lugar-btn-fav" (click)="destacarLugar(lugar); $event.stopPropagation()" title="Destacar lugar">
                     <span class="material-icons">favorite_border</span>
                   </button>
-                  <button class="btn-ver-mapa-icon" (click)="verLugarEnMapa(lugar, $event)" title="Ver en mapa">
+                  <button class="lugar-btn-mapa" (click)="verLugarEnMapa(lugar, $event)" title="Ver en mapa">
                     <span class="material-icons">map</span>
                   </button>
                 </div>
-                <div class="card-body">
-                  <h3 class="card-title">{{ lugar.nombre }}</h3>
-                  <p class="card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
-                  <div class="card-footer">
-                    <span class="card-location">
-                      <span class="material-icons location-icon">location_on</span>
+                <div class="lugar-card-body">
+                  <h3 class="lugar-card-title">{{ lugar.nombre }}</h3>
+                  <p class="lugar-card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
+                  <div class="lugar-card-footer">
+                    <span class="lugar-card-location">
+                      <span class="material-icons lugar-location-icon">location_on</span>
                       Quito
                     </span>
-                    <span class="card-price">{{ lugar.precio || '$$' }}</span>
+                    <span class="lugar-card-price">{{ lugar.precio || '$$' }}</span>
                   </div>
                 </div>
               </article>
