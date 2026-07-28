@@ -3,6 +3,9 @@
   "outputDirectory": "dist/ruta-cero-front/browser",
   "framework": "angular",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://API-URL-DE-RAILWAY.railway.app/api/$1" }
+    { 
+      "source": "/api/:path*", 
+      "destination": "https://ruta0-production.up.railway.app/api/:path*" 
+    }
   ]
 }
