@@ -6,12 +6,10 @@ dotenv.config();
 const { Pool } = pg;
 
 export const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    // Estas dos líneas evitan que el servidor se cuelgue:
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // Necesario para conexiones seguras en la nube
+    },
     max: 20, // Máximo 20 conexiones al mismo tiempo
     idleTimeoutMillis: 30000 // Cierra conexiones inactivas después de 30 seg
 });
