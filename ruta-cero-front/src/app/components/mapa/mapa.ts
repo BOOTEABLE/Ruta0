@@ -152,8 +152,17 @@ export class Mapa implements OnInit {
           </div>
         `;
 
-        const marker = L.marker([lat, lng])
-          .bindPopup(popupHTML);
+        const marker = L.marker([lat, lng], {
+  icon: L.icon({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+}).bindPopup(popupHTML);
 
         marker.on('click', () => {
           this.store.lugarSeleccionado.set(lugar);
