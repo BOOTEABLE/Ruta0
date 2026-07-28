@@ -1,0 +1,33 @@
+<div class="sidebar-container">
+  <!-- ─── LOGO ─── -->
+  <div class="sidebar-logo">
+    <span class="logo-ruta">Ruta</span><span class="logo-zero">0</span>
+  </div>
+
+  <!-- ─── NAVEGACIÓN ─── -->
+  <nav class="sidebar-nav">
+    @for (item of menuItems; track item.id) {
+      <button
+        class="nav-item"
+        [class.active]="item.id === activeItem()"
+        (click)="navegar(item)"
+      >
+        <span class="nav-icon material-icons">{{ item.icon }}</span>
+        <span class="nav-label">{{ item.label }}</span>
+        @if (item.id === activeItem()) {
+          <span class="nav-indicator" aria-hidden="true"></span>
+        }
+      </button>
+    }
+  </nav>
+
+  <!-- ─── TARJETA PROMOCIONAL ─── -->
+  <div class="promo-card">
+    <div class="promo-bg" aria-hidden="true"></div>
+    <div class="promo-content">
+      <span class="promo-icon material-icons">explore</span>
+      <h3 class="promo-title">Descubre Quito</h3>
+      <p class="promo-desc">Explora los mejores lugares de la ciudad con ayuda de inteligencia artificial</p>
+    </div>
+  </div>
+</div>

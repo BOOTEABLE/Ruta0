@@ -2,13 +2,16 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Mapa } from '../mapa/mapa';
 import { PanelLateral } from '../panel-lateral/panel-lateral';
+import { Sidebar } from '../sidebar/sidebar';
+import { Navbar } from '../navbar/navbar';
+import { ChatView } from '../chat-view/chat-view';
 import { PerfilService, Lugar } from '../../services/perfil.service';
 import { Store } from '../../services/store';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, Mapa, PanelLateral],
+  imports: [CommonModule, Mapa, PanelLateral, Sidebar, Navbar, ChatView],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -16,6 +19,7 @@ export class DashboardComponent implements OnInit {
   private perfil = inject(PerfilService);
   private store = inject(Store);
 
+  seccion = this.store.seccionSidebar;
   cargandoRecomendaciones = signal(false);
 
   ngOnInit() {

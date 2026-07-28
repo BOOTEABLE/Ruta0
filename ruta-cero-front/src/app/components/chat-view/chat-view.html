@@ -1,0 +1,39 @@
+<div class="chat-area">
+  <div class="chat-messages" #messagesContainer>
+    @for (msg of historial(); track $index) {
+      <div class="chat-msg" [class.msg-user]="msg.emisor === 'usuario'">
+        <div class="chat-bubble" [class.bot]="msg.emisor === 'bot'" [class.user]="msg.emisor === 'usuario'">
+          @if (msg.emisor === 'bot') {
+            <span class="chat-emoji">🤖</span>
+          }
+          <div [innerHTML]="formatearMensaje(msg.texto)"></div>
+        </div>
+      </div>
+    }
+    @if (procesandoMensaje) {
+      <div class="chat-msg">
+        <div class="chat-bubble bot typing">
+          <span class="chat-emoji">🤖</span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="chat-input">
+    <input
+      #chatInput
+      type="text"
+      placeholder="Ej: Tengo $20 y 3 horas..."
+      (keyup.enter)="enviarMensaje(chatInput.value, chatInput)"
+      [disabled]="procesandoMensaje"
+    />
+    <button
+      class="chat-send-btn"
+      (click)="enviarMensaje(chatInput.value, chatInput)"
+      [disabled]="procesandoMensaje || !chatInput.value?.trim()"
+    >
+      <span class="material-icons">send</span>
+    </button>
+  </div>
+</div>

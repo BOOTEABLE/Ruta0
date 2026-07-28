@@ -1,0 +1,15 @@
+<div class="navbar-container">
+  <div class="location-block">
+    <span class="location-icon material-icons">push_pin</span>
+    <div class="location-info">
+      <span class="location-label">Mi ubicación</span>
+      <span class="location-coords">-0.1807, -78.4678</span>
+    </div>
+  </div>
+
+  <div class="user-controls">
+    <button class="profile-btn" (click)="irAPerfil()" title="Mi perfil">
+      <span class="profile-avatar">{{ (auth.currentUser()?.nombre || 'U').charAt(0).toUpperCase() }}</span>
+    </button>
+  </div>
+</div>

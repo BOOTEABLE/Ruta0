@@ -27,6 +27,7 @@ export class Store {
   lugarSeleccionado = signal<Lugar | null>(null);
   lugaresRecomendados = signal<Lugar[]>([]);
   vistaActual = signal<'descubrir' | 'chat' | 'detalle'>('descubrir');
+  seccionSidebar = signal<'mapa' | 'chat' | 'rutas' | 'favoritos' | 'historial' | 'configuracion'>('mapa');
   
   // 2. NUEVO: Agregamos la memoria del chat con un saludo inicial
   historialChat = signal<Mensaje[]>([

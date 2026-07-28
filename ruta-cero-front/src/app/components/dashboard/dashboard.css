@@ -1,27 +1,142 @@
 .dashboard-container {
-  display: flex !important; /* Fuerza a que los componentes se pongan uno al lado del otro */
-  flex-direction: row !important;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 64px 1fr;
   width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  box-sizing: border-box;
+  background-color: #e5e3df;
 }
 
+/* ─── SIDEBAR ─────────────────────────────────── */
+.sidebar-area {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  height: 100vh;
+  background: var(--panel-bg, #ffffff);
+  border-right: 1px solid var(--border-color, #e2e8f0);
+  z-index: 1100;
+  overflow: hidden;
+}
+
+/* ─── NAVBAR ──────────────────────────────────── */
+.navbar-area {
+  grid-column: 2;
+  grid-row: 1;
+  height: 64px;
+  background: var(--panel-bg, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── MAPA ────────────────────────────────────── */
 .map-area {
-  flex: 7; /* Ocupa el 70% de la pantalla */
-  height: 100vh;
+  grid-column: 2;
+  grid-row: 2;
   position: relative;
-  background-color: #e5e3df; /* Color gris base por si el mapa tarda en cargar */
+  overflow: hidden;
 }
 
-.panel-area {
-  flex: 3; /* Ocupa el 30% de la pantalla */
-  height: 100vh;
-  box-shadow: -3px 0 10px rgba(0,0,0,0.15);
-  background-color: #ffffff;
-  z-index: 1000;
+.map-area > app-mapa {
+  position: absolute;
+  inset: 0;
+}
+
+/* ─── FLOATING PANEL ──────────────────────────── */
+.floating-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: 400px;
+  max-width: calc(100vw - 280px);
+  background: var(--panel-bg, #ffffff);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.18));
+  border: 1px solid var(--border-color, #e2e8f0);
+  z-index: 1020;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  animation: panelSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── CHAT MODE ────────────────────────────────── */
+.chat-mode .map-area > app-mapa {
+  filter: brightness(0.6) saturate(0.3);
+  transition: filter 0.4s ease;
+}
+
+.chat-center {
+  position: absolute;
+  left: 0;
+  right: 440px;
+  top: 0;
+  bottom: 0;
+  z-index: 1010;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-mode .floating-panel {
+  width: 400px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+}
+
+/* ─── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 1024px) {
+  .floating-panel {
+    width: 340px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px 1fr;
+  }
+
+  .sidebar-area {
+    display: none;
+  }
+
+  .navbar-area {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .map-area {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .floating-panel {
+    top: 8px;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: auto;
+    max-width: none;
+  }
+
+  .chat-center {
+    right: 0;
+    bottom: 50%;
+  }
 }

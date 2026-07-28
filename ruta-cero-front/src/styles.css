@@ -71,7 +71,7 @@
   --font-secondary: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-[data-theme="dark"] {
+.dark-mode {
   --bg-primary: var(--slate-900);
   --bg-secondary: var(--slate-800);
   --bg-tertiary: var(--slate-700);
@@ -525,4 +525,234 @@ a:hover {
     .destacados-grid-admin {
         grid-template-columns: 1fr;
     }
+}
+
+/* ===== DARK MODE OVERRIDES ===== */
+
+/* Dashboard */
+.dark-mode .dashboard-container {
+  background-color: var(--slate-900) !important;
+}
+
+/* Floating panel */
+.dark-mode .floating-panel,
+.dark-mode .chat-mode .floating-panel {
+  background: var(--slate-800) !important;
+  border-color: var(--slate-700) !important;
+}
+
+/* Panel lateral cards */
+.dark-mode .place-card,
+.dark-mode .itinerario-card,
+.dark-mode .destacado-card,
+.dark-mode .btn-config {
+  background: var(--slate-800) !important;
+  border-color: var(--slate-700) !important;
+}
+
+.dark-mode .place-card:hover,
+.dark-mode .itinerario-card:hover,
+.dark-mode .destacado-card:hover {
+  border-color: var(--green-400) !important;
+}
+
+.dark-mode .card-body .card-title,
+.dark-mode .itinerario-nombre,
+.dark-mode .dropdown-user-name {
+  color: var(--slate-100) !important;
+}
+
+.dark-mode .card-desc,
+.dark-mode .itinerario-desc,
+.dark-mode .itinerario-meta,
+.dark-mode .destacado-meta span,
+.dark-mode .destacado-fecha,
+.dark-mode .config-section-label {
+  color: var(--slate-400) !important;
+}
+
+.dark-mode .card-location {
+  color: var(--slate-500) !important;
+}
+
+.dark-mode .card-price {
+  color: var(--green-400) !important;
+}
+
+.dark-mode .lugares-lista li {
+  background: var(--slate-900) !important;
+}
+
+.dark-mode .lugar-nombre {
+  color: var(--slate-200) !important;
+}
+
+.dark-mode .lugar-categoria {
+  color: var(--green-400) !important;
+  background: #1a2e1a !important;
+}
+
+/* Chat */
+.dark-mode .chat-bubble.bot {
+  background: var(--slate-800) !important;
+  border-color: var(--slate-700) !important;
+  color: var(--slate-200) !important;
+}
+
+.dark-mode .chat-input input {
+  background: var(--slate-900) !important;
+  border-color: var(--slate-700) !important;
+  color: var(--slate-200) !important;
+}
+
+.dark-mode .chat-input input::placeholder {
+  color: var(--slate-500) !important;
+}
+
+.dark-mode .chat-input input:focus {
+  border-color: var(--green-400) !important;
+}
+
+/* Historial chips in chat sidebar */
+.dark-mode .historial-chip {
+  background: var(--slate-800) !important;
+  border-color: var(--slate-700) !important;
+  color: var(--slate-300) !important;
+}
+
+.dark-mode .historial-chip:hover {
+  background: var(--slate-700) !important;
+}
+
+/* Sugerencias */
+.dark-mode .chip-sugerencia {
+  background: var(--slate-800) !important;
+  border-color: var(--slate-700) !important;
+  color: var(--slate-300) !important;
+}
+
+.dark-mode .chip-sugerencia:hover {
+  border-color: var(--green-400) !important;
+  color: var(--green-400) !important;
+  background: #1a2e1a !important;
+}
+
+/* Modal guardar */
+.dark-mode .modal-guardar .modal-content {
+  background: var(--slate-800);
+}
+
+.dark-mode .modal-guardar .modal-header .modal-title {
+  color: var(--slate-100);
+}
+
+.dark-mode .modal-guardar .modal-body .modal-subtitle {
+  color: var(--slate-400);
+}
+
+.dark-mode .modal-guardar .modal-body .modal-hint {
+  color: var(--slate-500);
+}
+
+.dark-mode .modal-guardar .modal-body input {
+  background: var(--slate-900);
+  border-color: var(--slate-700);
+  color: var(--slate-200);
+}
+
+.dark-mode .modal-guardar .modal-body input:focus {
+  border-color: var(--green-400);
+  background: var(--slate-800);
+}
+
+.dark-mode .modal-guardar .modal-footer {
+  border-top-color: var(--slate-700);
+}
+
+.dark-mode .modal-guardar .modal-footer .btn-cancelar {
+  background: var(--slate-700);
+  color: var(--slate-300);
+}
+
+.dark-mode .modal-guardar .modal-footer .btn-cancelar:hover {
+  background: var(--slate-600);
+}
+
+/* Toast */
+.dark-mode .toast-notificacion {
+  background: var(--slate-700);
+}
+
+.dark-mode .toast-notificacion.success {
+  background: var(--green-700);
+}
+
+.dark-mode .toast-notificacion.error {
+  background: var(--red-700);
+}
+
+.dark-mode .toast-notificacion.info {
+  background: #1e3a5f;
+}
+
+/* Map - Leaflet */
+html.dark-mode .leaflet-container {
+  filter: brightness(0.7) invert(1) hue-rotate(180deg) contrast(1.1);
+  background: #0f172a !important;
+}
+
+html.dark-mode .leaflet-control-zoom a {
+  background: var(--slate-700) !important;
+  color: var(--slate-200) !important;
+  border-color: var(--slate-600) !important;
+}
+
+html.dark-mode .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.85) !important;
+  color: var(--slate-400) !important;
+}
+
+html.dark-mode .leaflet-control-attribution a {
+  color: var(--green-400) !important;
+}
+
+/* Pin markers in dark mode */
+.dark-mode .pin-marker {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ===== MARCADORES PERSONALIZADOS DEL MAPA ===== */
+.pin-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.pin-marker::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid var(--pin-bg, #3b82f6);
+}
+
+.pin-marker:hover {
+  transform: scale(1.15);
+}
+
+.pin-icon {
+  font-size: 20px;
+  color: #ffffff;
 }

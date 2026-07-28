@@ -16,6 +16,36 @@ export class Mapa implements OnInit {
   private markersLayer: any;
   private isBrowser: boolean;
 
+  private static readonly CATEGORIA_MAPA: Record<string, { color: string; icono: string }> = {
+    cafetería:       { color: '#F97316', icono: 'coffee' },
+    gastronomía:     { color: '#F97316', icono: 'restaurant' },
+    restaurante:     { color: '#F97316', icono: 'restaurant' },
+    cultura:         { color: '#8B5CF6', icono: 'museum' },
+    museo:           { color: '#8B5CF6', icono: 'museum' },
+    iglesia:         { color: '#8B5CF6', icono: 'church' },
+    parque:          { color: '#22C55E', icono: 'park' },
+    mirador:         { color: '#22C55E', icono: 'landscape' },
+    entretenimiento: { color: '#EC4899', icono: 'theater_comedy' },
+    'vida nocturna': { color: '#EC4899', icono: 'nightlife' },
+    'centro comercial': { color: '#3B82F6', icono: 'shopping_cart' },
+  };
+
+  static crearIcono(L: any, categoria: string, color?: string, icono?: string): any {
+    const entry = Mapa.CATEGORIA_MAPA[categoria?.toLowerCase()];
+    const c = color || entry?.color || '#3B82F6';
+    const i = icono || entry?.icono || 'place';
+
+    return L.divIcon({
+      className: '',
+      html: `<div class="pin-marker" style="--pin-bg:${c}; background:${c}">
+              <span class="material-icons pin-icon">${i}</span>
+             </div>`,
+      iconSize: [40, 48],
+      iconAnchor: [20, 48],
+      popupAnchor: [0, -44],
+    });
+  }
+
   // Nueva señal para controlar cuándo el mapa está listo
   private mapReady = signal(false);
 

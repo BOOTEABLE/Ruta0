@@ -11,37 +11,6 @@
     <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Tabs -->
-  <nav class="tabs" role="tablist">
-    <button 
-      role="tab" 
-      class="tab" 
-      [class.active]="activeTab() === 'preferencias'"
-      (click)="setTab('preferencias')"
-      [attr.aria-selected]="activeTab() === 'preferencias'"
-    >
-      ❤️ Preferencias
-    </button>
-    <button 
-      role="tab" 
-      class="tab" 
-      [class.active]="activeTab() === 'itinerarios'"
-      (click)="setTab('itinerarios')"
-      [attr.aria-selected]="activeTab() === 'itinerarios'"
-    >
-      🗂️ Mis Itinerarios
-    </button>
-    <button 
-      role="tab" 
-      class="tab" 
-      [class.active]="activeTab() === 'destacados'"
-      (click)="setTab('destacados')"
-      [attr.aria-selected]="activeTab() === 'destacados'"
-    >
-      ⭐ Mis Destacados
-    </button>
-  </nav>
-
   @if (error()) {
     <div class="alert error">{{ error() }}</div>
   }
@@ -49,185 +18,73 @@
     <div class="alert success">{{ exito() }}</div>
   }
 
-  <!-- TAB: PREFERENCIAS -->
-  @if (activeTab() === 'preferencias') {
-    <section class="tab-panel">
-      <h2>Tus gustos</h2>
-      <p class="hint">Selecciona qué te interesa y qué prefieres evitar</p>
+  <section class="tab-panel">
+    <h2>Tus gustos</h2>
+    <p class="hint">Selecciona qué te interesa y qué prefieres evitar</p>
 
-      <div class="pref-section">
-        <h3>❤️ Categorías favoritas</h3>
-        <div class="categorias-grid">
-          @for (cat of categoriasDisponibles; track cat) {
-            <button 
-              type="button"
-              class="cat-btn favorita"
-              [class.selected]="esFavorita(cat)"
-              (click)="toggleCategoria('favoritas', cat)"
-              [disabled]="cargando()"
-            >
-              {{ cat }}
-              @if (esFavorita(cat)) { <span class="check">✓</span> }
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="pref-section">
-        <h3>🚫 Categorías a evitar</h3>
-        <div class="categorias-grid">
-          @for (cat of categoriasDisponibles; track cat) {
-            <button 
-              type="button"
-              class="cat-btn evitada"
-              [class.selected]="esEvitada(cat)"
-              (click)="toggleCategoria('evitadas', cat)"
-              [disabled]="cargando()"
-            >
-              {{ cat }}
-              @if (esEvitada(cat)) { <span class="check">✓</span> }
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="pref-section">
-        <h3>💰 Rango de presupuesto (opcional)</h3>
-        <div class="presupuesto-row">
-          <div class="input-group">
-            <label>Mínimo</label>
-            <select [(ngModel)]="preferencias().presupuestoMinimo" [name]="'presupuestoMinimo'" [disabled]="cargando()">
-              <option value="">Cualquiera</option>
-              <option value="$">$ (Económico)</option>
-              <option value="$$">$$ (Medio)</option>
-              <option value="$$$">$$$ (Premium)</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label>Máximo</label>
-            <select [(ngModel)]="preferencias().presupuestoMaximo" [name]="'presupuestoMaximo'" [disabled]="cargando()">
-              <option value="">Cualquiera</option>
-              <option value="$">$ (Económico)</option>
-              <option value="$$">$$ (Medio)</option>
-              <option value="$$$">$$$ (Premium)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-primary" (click)="guardarPreferencias()" [disabled]="cargando()">
-        @if (cargando()) { <span class="spinner"></span> Guardando... }
-        @else { 💾 Guardar preferencias }
-      </button>
-    </section>
-  }
-
-  <!-- TAB: ITINERARIOS -->
-  @if (activeTab() === 'itinerarios') {
-    <section class="tab-panel">
-      <div class="itinerarios-header">
-        <h2>🗂️ Tus planes guardados</h2>
-      </div>
-
-      @if (itinerarios().length === 0) {
-        <div class="empty-state">
-          <div class="empty-icon">📭</div>
-          <h3>No hay itinerarios guardados</h3>
-          <p>Cuando el chatbot te sugiera un plan, podrás guardarlo aquí con un clic</p>
-        </div>
-      } @else {
-        <div class="itinerarios-lista">
-          @for (it of itinerarios(); track it.id) {
-            <article 
-              class="itinerario-card" 
-              [class.expanded]="itinerarioExpandido() === it.id"
-              (click)="verItinerario(it)"
-            >
-              <div class="itinerario-main">
-                <h3>{{ it.nombre }}</h3>
-                <!-- En perfil.html, eliminar o comentar la línea de la fecha -->
-<!-- <span class="fecha">{{ formatearFecha(it.createdAt) }}</span> -->
-              </div>
-              <p class="descripcion" *ngIf="it.descripcion">{{ it.descripcion }}</p>
-              <div class="lugares-count">
-                📍 {{ it.lugares?.length || it.lugaresIds?.length || 0 }} lugares
-              </div>
-
-              @if (itinerarioExpandido() === it.id && itinerarioDetalle()) {
-                <div class="itinerario-detalle">
-                  <h4>Lugares del recorrido:</h4>
-                  <ul class="lugares-lista">
-                    @for (lugar of itinerarioDetalle()!.lugares; track lugar.id) {
-                      <li>
-                        <span class="lugar-nombre">{{ lugar.nombre }}</span>
-                        <span class="lugar-categoria">{{ lugar.categoria }}</span>
-                      </li>
-                    }
-                  </ul>
-                  <button class="btn-ver-mapa" (click)="verEnMapa(itinerarioDetalle()!); $event.stopPropagation()">
-                    🗺️ Ver en mapa
-                  </button>
-                </div>
-              }
-
-              <div class="itinerario-actions">
-                <button class="btn-delete" (click)="eliminarItinerario(it.id, $event)" title="Eliminar">🗑️</button>
-              </div>
-            </article>
-          }
-        </div>
-      }
-    </section>
-  }
-
-  <!-- TAB: MIS DESTACADOS -->
-  @if (activeTab() === 'destacados') {
-    <section class="tab-panel">
-      <div class="destacados-header">
-        <h2>⭐ Mis Lugares Destacados</h2>
-        <span class="badge">{{ misDestacados().length }} lugares</span>
-      </div>
-      
-      <p class="hint">
-        💡 Los lugares que destacas aparecerán en tus recomendaciones principales. 
-        Para agregar un lugar, ve al mapa, selecciona un lugar y haz clic en "Destacar".
-      </p>
-
-      <div class="destacados-grid">
-        @if (cargandoDestacados()) {
-          <div class="loading-state">
-            <span class="spinner"></span>
-            Cargando destacados...
-          </div>
-        } @else {
-          @for (item of misDestacados(); track item.id) {
-            <div class="destacado-card">
-              <div class="destacado-header">
-                <h4>{{ item.nombre }}</h4>
-                <span class="categoria-badge">{{ item.categoria }}</span>
-              </div>
-              <p class="destacado-desc">{{ item.descripcion || 'Sin descripción' }}</p>
-              <div class="destacado-meta">
-                <span>📍 {{ item.latitud }}, {{ item.longitud }}</span>
-                <span>🕐 {{ item.horario || 'Sin horario' }}</span>
-                <span>💰 {{ item.precio || 'No especificado' }}</span>
-              </div>
-              <div class="destacado-fecha">
-                <span>Agregado: {{ formatearFecha(item.created_at) }}</span>
-              </div>
-              <button class="btn-eliminar-destacado" (click)="eliminarDestacado(item.id)">
-                🗑️ Eliminar
-              </button>
-            </div>
-          } @empty {
-            <div class="empty-state">
-              <div class="empty-icon">⭐</div>
-              <p>No tienes lugares destacados</p>
-              <span class="hint">Ve al mapa, selecciona un lugar y haz clic en "Destacar"</span>
-            </div>
-          }
+    <div class="pref-section">
+      <h3>❤️ Categorías favoritas</h3>
+      <div class="categorias-grid">
+        @for (cat of categoriasDisponibles; track cat) {
+          <button 
+            type="button"
+            class="cat-btn favorita"
+            [class.selected]="esFavorita(cat)"
+            (click)="toggleCategoria('favoritas', cat)"
+            [disabled]="cargando()"
+          >
+            {{ cat }}
+            @if (esFavorita(cat)) { <span class="check">✓</span> }
+          </button>
         }
       </div>
-    </section>
-  }
+    </div>
+
+    <div class="pref-section">
+      <h3>🚫 Categorías a evitar</h3>
+      <div class="categorias-grid">
+        @for (cat of categoriasDisponibles; track cat) {
+          <button 
+            type="button"
+            class="cat-btn evitada"
+            [class.selected]="esEvitada(cat)"
+            (click)="toggleCategoria('evitadas', cat)"
+            [disabled]="cargando()"
+          >
+            {{ cat }}
+            @if (esEvitada(cat)) { <span class="check">✓</span> }
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="pref-section">
+      <h3>💰 Rango de presupuesto (opcional)</h3>
+      <div class="presupuesto-row">
+        <div class="input-group">
+          <label>Mínimo</label>
+          <select [(ngModel)]="preferencias().presupuestoMinimo" [name]="'presupuestoMinimo'" [disabled]="cargando()">
+            <option value="">Cualquiera</option>
+            <option value="$">$ (Económico)</option>
+            <option value="$$">$$ (Medio)</option>
+            <option value="$$$">$$$ (Premium)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Máximo</label>
+          <select [(ngModel)]="preferencias().presupuestoMaximo" [name]="'presupuestoMaximo'" [disabled]="cargando()">
+            <option value="">Cualquiera</option>
+            <option value="$">$ (Económico)</option>
+            <option value="$$">$$ (Medio)</option>
+            <option value="$$$">$$$ (Premium)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" (click)="guardarPreferencias()" [disabled]="cargando()">
+      @if (cargando()) { <span class="spinner"></span> Guardando... }
+      @else { 💾 Guardar preferencias }
+    </button>
+  </section>
 </div>

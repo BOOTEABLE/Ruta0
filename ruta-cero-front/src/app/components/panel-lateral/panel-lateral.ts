@@ -1,11 +1,11 @@
-import { Component, inject, OnInit, ElementRef, ViewChild, signal } from '@angular/core';
+import { Component, inject, OnInit, ElementRef, ViewChild, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Store, Lugar } from '../../services/store';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { PerfilService } from '../../services/perfil.service';
-import { AdminService } from '../../services/admin.service';
+import { PerfilService, Itinerario, ItinerarioConLugares } from '../../services/perfil.service';
+import { AdminService, Destacado } from '../../services/admin.service';
 
 @Component({
   selector: 'app-panel-lateral',
@@ -30,6 +30,24 @@ export class PanelLateral implements OnInit {
   lugaresRecomendados = this.store.lugaresRecomendados;
   cargandoGooglePlaces = signal(false);
   mostrandoDefaults = signal(true);
+
+  seccion = this.store.seccionSidebar;
+  favoritos = signal<Destacado[]>([]);
+  itinerarios = signal<Itinerario[]>([]);
+  cargandoFavoritos = false;
+  cargandoItinerarios = false;
+  itinerarioExpandido = signal<number | null>(null);
+  itinerarioDetalle = signal<ItinerarioConLugares | null>(null);
+  cargandoDetalle = signal(false);
+
+  constructor() {
+    effect(() => {
+      const sec = this.seccion();
+      if (sec === 'favoritos') this.cargarFavoritos();
+      else if (sec === 'historial' || sec === 'rutas') this.cargarItinerarios();
+      else if (sec === 'chat') setTimeout(() => this.scrollAlFinal(), 100);
+    });
+  }
 
   // Default places shown when no API data is available
   lugaresDefault: Lugar[] = [
@@ -165,12 +183,118 @@ export class PanelLateral implements OnInit {
     }
   }
 
-  irAPerfil() {
-    this.router.navigate(['/perfil']);
+  modoOscuro = localStorage.getItem('modoOscuro') === 'true';
+  altoContraste = localStorage.getItem('altoContraste') === 'true';
+
+  toggleModoOscuro() {
+    this.modoOscuro = !this.modoOscuro;
+    document.documentElement.classList.toggle('dark-mode', this.modoOscuro);
+    localStorage.setItem('modoOscuro', String(this.modoOscuro));
+  }
+
+  toggleAltoContraste() {
+    this.altoContraste = !this.altoContraste;
+    document.documentElement.classList.toggle('alto-contraste', this.altoContraste);
+    localStorage.setItem('altoContraste', String(this.altoContraste));
   }
 
   logout() {
     this.auth.logout();
+  }
+
+  private async cargarFavoritos() {
+    this.cargandoFavoritos = true;
+    try {
+      const res = await this.admin.getMisDestacados().toPromise();
+      this.favoritos.set(res?.destacados || []);
+    } catch {
+      this.favoritos.set([]);
+    } finally {
+      this.cargandoFavoritos = false;
+    }
+  }
+
+  private async cargarItinerarios() {
+    this.cargandoItinerarios = true;
+    try {
+      const res = await this.perfil.listarItinerarios().toPromise();
+      this.itinerarios.set(res?.itinerarios || []);
+    } catch {
+      this.itinerarios.set([]);
+    } finally {
+      this.cargandoItinerarios = false;
+    }
+  }
+
+  toggleItinerario(it: Itinerario) {
+    if (this.itinerarioExpandido() === it.id) {
+      this.itinerarioExpandido.set(null);
+      this.itinerarioDetalle.set(null);
+      return;
+    }
+
+    this.cargandoDetalle.set(true);
+    this.perfil.obtenerItinerario(it.id).subscribe({
+      next: (res) => {
+        this.itinerarioDetalle.set(res.itinerario);
+        this.itinerarioExpandido.set(it.id);
+        this.cargandoDetalle.set(false);
+      },
+      error: () => {
+        this.cargandoDetalle.set(false);
+      }
+    });
+  }
+
+  verEnMapa(itinerario: ItinerarioConLugares, event: Event) {
+    event.stopPropagation();
+    if (itinerario.lugares && itinerario.lugares.length > 0) {
+      sessionStorage.setItem('itinerarioActivo', JSON.stringify(itinerario));
+      this.router.navigate(['/']);
+    }
+  }
+
+  eliminarItinerario(id: number, event: Event) {
+    event.stopPropagation();
+    if (!confirm('¿Eliminar este itinerario?')) return;
+
+    this.perfil.eliminarItinerario(id).subscribe({
+      next: () => {
+        this.itinerarios.update(arr => arr.filter(i => i.id !== id));
+        if (this.itinerarioExpandido() === id) {
+          this.itinerarioExpandido.set(null);
+          this.itinerarioDetalle.set(null);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  eliminarDestacado(id: number, event: Event) {
+    event.stopPropagation();
+    if (!confirm('¿Eliminar este lugar de tus destacados?')) return;
+
+    this.admin.deleteDestacado(id).subscribe({
+      next: () => {
+        this.favoritos.update(list => list.filter(item => item.id !== id));
+      },
+      error: () => {}
+    });
+  }
+
+  formatearFecha(fecha: string): string {
+    return new Date(fecha).toLocaleDateString('es-EC', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  repetirConsulta(texto: string) {
+    this.store.seccionSidebar.set('chat');
+    this.sugerirCategoria(texto.replace(/^.*"(.*)".*$/, '$1'));
   }
 
   irAAdmin() {

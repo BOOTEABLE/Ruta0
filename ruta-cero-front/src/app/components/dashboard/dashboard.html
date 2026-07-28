@@ -1,9 +1,23 @@
-<div class="dashboard-container">
-  <div class="map-area">
-    <app-mapa></app-mapa>
-  </div>
+<div class="dashboard-container" [class.chat-mode]="seccion() === 'chat'">
+  <aside class="sidebar-area">
+    <app-sidebar></app-sidebar>
+  </aside>
 
-  <div class="panel-area">
-    <app-panel-lateral></app-panel-lateral>
-  </div>
+  <header class="navbar-area">
+    <app-navbar></app-navbar>
+  </header>
+
+  <main class="map-area">
+    <app-mapa></app-mapa>
+
+    @if (seccion() === 'chat') {
+      <div class="chat-center">
+        <app-chat-view></app-chat-view>
+      </div>
+    }
+
+    <aside class="floating-panel">
+      <app-panel-lateral></app-panel-lateral>
+    </aside>
+  </main>
 </div>

@@ -1,305 +1,244 @@
 <div class="panel-container">
-  <!-- === HEADER / TABS === -->
-  <header class="panel-header">
-    <nav class="tabs-nav" role="tablist">
-      <button
-        role="tab"
-        class="tab-btn"
-        [class.active]="vista() === 'descubrir'"
-        (click)="cambiarVista('descubrir')"
-        [attr.aria-selected]="vista() === 'descubrir'"
-      >
-        <span class="material-icons tab-icon">explore</span>
-        <span class="tab-label">Descubrir</span>
-      </button>
-      <button
-        role="tab"
-        class="tab-btn"
-        [class.active]="vista() === 'chat'"
-        (click)="cambiarVista('chat')"
-        [attr.aria-selected]="vista() === 'chat'"
-      >
-        <span class="material-icons tab-icon">chat</span>
-        <span class="tab-label">Asistente</span>
-      </button>
-    </nav>
-    <div class="header-actions">
-      <button class="icon-btn perfil-btn" (click)="irAPerfil()" title="Mi Perfil">
-        <span class="material-icons">person</span>
-      </button>
-<!-- En panel-lateral.html -->
-      @if (auth.isAdmin()) {
-    <button class="icon-btn admin-btn" (click)="irAAdmin()" title="Panel Admin">
-        🛡️
-    </button>
-      }
-      <button class="icon-btn logout-btn" (click)="logout()" title="Cerrar sesión">
-        <span class="material-icons">logout</span>
-      </button>
+
+  <!-- ======================== MAPA ======================== -->
+  @if (seccion() === 'mapa') {
+    <div class="panel-header">
+      <h2 class="panel-title">Lugares recomendados</h2>
+      <span class="panel-subtitle">Cerca de ti</span>
     </div>
-  </header>
 
-  <!-- === CONTENT === -->
-  <div class="panel-content">
-
-    <!-- ===== DESCUBRIR VIEW ===== -->
-    @if (vista() === 'descubrir') {
-      <div class="view discover-view">
-
-        <!-- Weather card -->
-        <div class="weather-card">
-          <div class="weather-icon">🌤️</div>
-          <div class="weather-info">
-            <span class="weather-label">Quito hoy</span>
-            <span class="weather-text">Parcialmente nublado — ideal para caminar</span>
-          </div>
+    <div class="panel-body">
+      @if (cargandoGooglePlaces() && lugaresRecomendados().length === 0) {
+        <div class="places-loading">
+          <span class="spinner"></span>
+          Cargando lugares de Google...
         </div>
-
-        <!-- Recommended places: defaults or from API -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title">
-              {{ lugaresRecomendados().length > 0 ? 'Lugares recomendados' : 'Descubre Quito' }}
-            </h2>
-            @if (lugaresRecomendados().length > 0) {
-              <span class="section-badge">{{ lugaresRecomendados().length }} lugares</span>
-            } @else {
-              <span class="section-badge">{{ usarDefaultLugares().length }} lugares</span>
-            }
-          </div>
-          <div class="cards-grid">
-            @if (cargandoGooglePlaces() && lugaresRecomendados().length === 0) {
-              <div class="places-loading">
-                <span class="spinner"></span>
-                Cargando lugares de Google...
+      } @else {
+        @for (lugar of lugaresRecomendados().length > 0 ? lugaresRecomendados() : usarDefaultLugares(); track lugar.id ?? $index) {
+          <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
+            <div class="card-image"
+                 [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
+                 [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">
+              <div class="card-image-overlay"></div>
+              <span class="card-category-badge">{{ lugar.categoria }}</span>
+              <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
+              @if (lugar.photoUrl) {
+                <span class="card-source-badge" title="Foto de Google Places">📸</span>
+              }
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">{{ lugar.nombre }}</h3>
+              <p class="card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
+              <div class="card-footer">
+                <span class="card-location">
+                  <span class="material-icons location-icon">location_on</span>
+                  Quito
+                </span>
+                <span class="card-price">{{ lugar.precio || '$$' }}</span>
               </div>
-            } @else {
-              @for (lugar of lugaresRecomendados().length > 0 ? lugaresRecomendados() : usarDefaultLugares(); track lugar.id ?? $index) {
-              <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
-                <div class="card-image" 
-                     [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
-                     [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">
-                  <div class="card-image-overlay"></div>
-                  <span class="card-category-badge">{{ lugar.categoria }}</span>
-                  <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
-                  @if (lugar.photoUrl) {
-                    <span class="card-source-badge" title="Foto de Google Places">📸</span>
-                  }
-                </div>
-                <div class="card-body">
-                  <h3 class="card-title">{{ lugar.nombre }}</h3>
-                  <p class="card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
-                  <div class="card-footer">
-                    <span class="card-location">
-                      <span class="material-icons location-icon">location_on</span>
-                      Quito
-                    </span>
-                    <span class="card-price">{{ lugar.precio || '$$' }}</span>
-                  </div>
-                </div>
-              </article>
-            }
-            }
-          </div>
-        </section>
+            </div>
+          </article>
+        }
+      }
+    </div>
 
-        <!-- Category chips -->
-        <section class="section">
-          <h2 class="section-title">Explorar por categoría</h2>
-          <div class="chips-row">
-            <span class="chip" (click)="sugerirCategoria('Cafetería')">
-              <span class="chip-icon">☕</span>
-              <span>Cafeterías</span>
-            </span>
-            <span class="chip" (click)="sugerirCategoria('Parque')">
-              <span class="chip-icon">🌳</span>
-              <span>Parques</span>
-            </span>
-            <span class="chip" (click)="sugerirCategoria('Museo')">
-              <span class="chip-icon">🏛️</span>
-              <span>Museos</span>
-            </span>
-            <span class="chip" (click)="sugerirCategoria('Iglesia')">
-              <span class="chip-icon">⛪</span>
-              <span>Iglesias</span>
-            </span>
-            <span class="chip" (click)="sugerirCategoria('Mirador')">
-              <span class="chip-icon">🏔️</span>
-              <span>Miradores</span>
-            </span>
-          </div>
-        </section>
+    <div class="panel-footer">
+      <button class="btn-rutas" (click)="seccion.set('rutas')">
+        <span class="material-icons">map</span>
+        Ver todas las rutas cercanas
+      </button>
+    </div>
+  }
 
-        <!-- AI Assistant hero banner -->
-        <section class="section">
-          <div class="ai-hero-card">
-            <div class="ai-hero-bg" aria-hidden="true"></div>
-            <div class="ai-hero-content">
-              <div class="ai-hero-icon">🤖</div>
-              <h3 class="ai-hero-title">Asistente IA</h3>
-              <p class="ai-hero-desc">
-                Dile tu presupuesto, tiempo disponible o estado de ánimo y recibe un plan personalizado al instante.
-              </p>
-              <button class="ai-hero-btn" (click)="cambiarVista('chat')">
-                <span class="material-icons">auto_awesome</span>
-                Preguntar ahora
+  <!-- ======================== CHAT (sugerencias + historial) ======================== -->
+  @if (seccion() === 'chat') {
+    <div class="panel-header">
+      <h2 class="panel-title">Sugerencias rápidas</h2>
+      <span class="panel-subtitle">Pregunta sobre lugares en Quito</span>
+    </div>
+
+    <div class="panel-body">
+      <div class="sugerencias-grid">
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Cafetería')">
+          <span class="chip-icon-big">☕</span>
+          <span>Cafeterías</span>
+        </button>
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Parque')">
+          <span class="chip-icon-big">🌳</span>
+          <span>Parques</span>
+        </button>
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Museo')">
+          <span class="chip-icon-big">🏛️</span>
+          <span>Museos</span>
+        </button>
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Mirador')">
+          <span class="chip-icon-big">🏔️</span>
+          <span>Miradores</span>
+        </button>
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Gastronomía')">
+          <span class="chip-icon-big">🍽️</span>
+          <span>Gastronomía</span>
+        </button>
+        <button class="chip-sugerencia" (click)="sugerirCategoria('Vida Nocturna')">
+          <span class="chip-icon-big">🌙</span>
+          <span>Vida Nocturna</span>
+        </button>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <h3 class="section-title-sm">Historial reciente</h3>
+      <div class="historial-chips">
+        @if (historial().length <= 1) {
+          <p class="empty-hint">Aún no hay conversaciones. ¡Pregunta algo!</p>
+        } @else {
+          @for (msg of historial().slice(-6, -1).reverse(); track $index) {
+            @if (msg.emisor === 'usuario') {
+              <button class="historial-chip" (click)="repetirConsulta(msg.texto)">
+                <span class="material-icons">history</span>
+                <span class="historial-texto">{{ truncarDescripcion(msg.texto, 40) }}</span>
               </button>
-            </div>
-            <div class="ai-hero-shine" aria-hidden="true"></div>
-          </div>
-        </section>
-
-      </div>
-    }
-
-<!-- CHAT VIEW -->
-@if (vista() === 'chat') {
-  <div class="view chat-view">
-    <!-- Save bar - FIJADO ARRIBA -->
-    @if (lugaresRecomendados().length > 0) {
-      <div class="save-bar">
-        <div class="save-bar-info">
-          <span class="material-icons save-bar-icon">map</span>
-          <span>{{ lugaresRecomendados().length }} lugares en el mapa</span>
-        </div>
-        <button class="btn-save" (click)="guardarItinerarioActual()" [disabled]="guardandoItinerario">
-          @if (guardandoItinerario) {
-            <span class="spinner-sm"></span>
-          } @else {
-            <span class="material-icons btn-icon">bookmark</span>
+            }
           }
-          Guardar
-        </button>
-      </div>
-    }
-
-    <!-- Messages container - CON SCROLL -->
-    <div class="messages" #messagesContainer>
-      @for (msg of historial(); track $index) {
-        <div class="msg-row" [class.msg-user]="msg.emisor === 'usuario'">
-          <div class="msg-avatar" [class.bot-avatar]="msg.emisor === 'bot'" [class.user-avatar]="msg.emisor === 'usuario'">
-            @if (msg.emisor === 'bot') { 🤖 } @else { 👤 }
-          </div>
-          <div class="msg-bubble" [class.bot]="msg.emisor === 'bot'" [class.user]="msg.emisor === 'usuario'">
-            <div [innerHTML]="formatearMensaje(msg.texto)"></div>
-          </div>
-        </div>
-      }
-      @if (procesandoMensaje) {
-        <div class="msg-row">
-          <div class="msg-avatar bot-avatar">🤖</div>
-          <div class="msg-bubble bot typing-indicator">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Input area - FIJADO ABAJO -->
-    <div class="input-area">
-      <div class="input-wrapper-chat">
-        <input 
-          #chatInput
-          type="text" 
-          placeholder="Ej: Tengo $20 y 3 horas..." 
-          (keyup.enter)="enviarMensaje(chatInput.value, chatInput)"
-          [disabled]="procesandoMensaje"
-        >
-        <button 
-          class="btn-send" 
-          (click)="enviarMensaje(chatInput.value, chatInput)"
-          [disabled]="procesandoMensaje || !chatInput.value.trim()"
-        >
-          <span class="material-icons">send</span>
-        </button>
+        }
       </div>
     </div>
-  </div>
-}
+  }
 
-<!-- ===== DETAIL VIEW ===== -->
-@if (vista() === 'detalle' && lugarSeleccionado()) {
-    <div class="view detail-view">
-        <!-- Botón de volver -->
-        <button class="btn-back" (click)="cambiarVista('descubrir')">
-            <span class="material-icons">arrow_back</span>
-            Volver
-        </button>
-
-        <!-- Hero del lugar -->
-        <div class="detail-hero" [style.background]="getCategoryGradient(lugarSeleccionado()?.categoria)">
-            <div class="detail-hero-overlay"></div>
-            <div class="detail-hero-content">
-                <span class="detail-category-badge">{{ lugarSeleccionado()?.categoria }}</span>
-                <h2 class="detail-title">{{ lugarSeleccionado()?.nombre }}</h2>
-            </div>
+  <!-- ======================== FAVORITOS ======================== -->
+  @if (seccion() === 'favoritos') {
+    <div class="panel-header">
+      <h2 class="panel-title">Mis favoritos</h2>
+      <span class="panel-subtitle">Lugares que has destacado</span>
+    </div>
+    <div class="panel-body">
+      @if (cargandoFavoritos) {
+        <div class="places-loading"><span class="spinner"></span> Cargando favoritos...</div>
+      } @else if (favoritos().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon material-icons">favorite_border</span>
+          <p class="empty-text">Aún no tienes favoritos</p>
+          <p class="empty-hint">Destaca lugares desde el mapa para verlos aquí</p>
         </div>
-
-        <!-- Cuerpo del detalle -->
-        <div class="detail-body">
-            <p class="detail-desc">{{ lugarSeleccionado()?.descripcion || 'Sin descripción disponible' }}</p>
-            
-            <div class="detail-info-grid">
-                <div class="info-item">
-                    <span class="info-icon">📍</span>
-                    <div>
-                        <span class="info-label">Ubicación</span>
-                        <span class="info-value">Quito, Ecuador</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">🕐</span>
-                    <div>
-                        <span class="info-label">Horario</span>
-                        <span class="info-value">{{ lugarSeleccionado()?.horario || 'Horario no disponible' }}</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">💰</span>
-                    <div>
-                        <span class="info-label">Presupuesto</span>
-                        <span class="info-value">{{ lugarSeleccionado()?.precio || 'No especificado' }}</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">🏷️</span>
-                    <div>
-                        <span class="info-label">Categoría</span>
-                        <span class="info-value">{{ lugarSeleccionado()?.categoria || 'General' }}</span>
-                    </div>
-                </div>
+      } @else {
+        @for (lugar of favoritos(); track lugar.id) {
+          <article class="destacado-card" (click)="centrarMapa(lugar)" role="button" tabindex="0">
+            <div class="card-image" [style.background]="getCategoryGradient(lugar.categoria)">
+              <div class="card-image-overlay"></div>
+              <span class="card-category-badge">{{ lugar.categoria }}</span>
+              <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
             </div>
-
-            <!-- Acciones -->
-            <div class="detail-actions">
-                <button class="btn-primary" (click)="centrarMapa(lugarSeleccionado()!)">
-                    🗺️ Ver en el mapa
-                </button>
-                
-                <button class="btn-secondary" (click)="preguntarPorLugar(lugarSeleccionado()!)">
-                    🤖 Preguntar a la IA
-                </button>
-
-                <!-- Botón Destacar (solo para usuarios autenticados) -->
-                @if (auth.isAuthenticated()) {
-                    <button 
-                        class="btn-destacar" 
-                        (click)="destacarLugar(lugarSeleccionado()!)" 
-                        [disabled]="destacando"
-                    >
-                        @if (destacando) {
-                            <span class="spinner-sm"></span>
-                        } @else {
-                            <span class="material-icons">star</span>
-                        }
-                        ⭐ Destacar lugar
-                    </button>
+            <div class="card-body">
+              <h3 class="card-title">{{ lugar.nombre }}</h3>
+              @if (lugar.descripcion) {
+                <p class="card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
+              }
+              <div class="destacado-meta">
+                @if (lugar.horario) {
+                  <span>🕐 {{ lugar.horario }}</span>
                 }
+                @if (lugar.precio) {
+                  <span>💰 {{ lugar.precio }}</span>
+                }
+              </div>
+              <div class="destacado-footer">
+                <span class="destacado-fecha">{{ formatearFecha(lugar.created_at) }}</span>
+                <button class="btn-delete" (click)="eliminarDestacado(lugar.id, $event)" title="Eliminar">🗑️</button>
+              </div>
             </div>
-        </div>
+          </article>
+        }
+      }
     </div>
-}
-  </div>
+  }
+
+  <!-- ======================== HISTORIAL / RUTAS ======================== -->
+  @if (seccion() === 'historial' || seccion() === 'rutas') {
+    <div class="panel-header">
+      <h2 class="panel-title">{{ seccion() === 'historial' ? 'Historial' : 'Mis rutas' }}</h2>
+      <span class="panel-subtitle">{{ seccion() === 'historial' ? 'Tus itinerarios recientes' : 'Rutas guardadas' }}</span>
+    </div>
+    <div class="panel-body">
+      @if (cargandoItinerarios) {
+        <div class="places-loading"><span class="spinner"></span> Cargando...</div>
+      } @else if (itinerarios().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon material-icons">{{ seccion() === 'historial' ? 'history' : 'signpost' }}</span>
+          <p class="empty-text">{{ seccion() === 'historial' ? 'No hay historial aún' : 'No tienes rutas guardadas' }}</p>
+          <p class="empty-hint">Guarda un itinerario desde el chat para verlo aquí</p>
+        </div>
+      } @else {
+        @for (it of itinerarios(); track it.id) {
+          <article 
+            class="itinerario-card" 
+            [class.expanded]="itinerarioExpandido() === it.id"
+            (click)="toggleItinerario(it)"
+          >
+            <div class="itinerario-main">
+              <div class="itinerario-info">
+                <h3 class="itinerario-nombre">{{ it.nombre }}</h3>
+                @if (it.descripcion) {
+                  <p class="itinerario-desc">{{ it.descripcion }}</p>
+                }
+                <span class="itinerario-meta">{{ it.lugares?.length || it.lugaresIds?.length || 0 }} lugares · {{ formatearFecha(it.createdAt) }}</span>
+              </div>
+              <div class="itinerario-actions">
+                <button class="btn-delete" (click)="eliminarItinerario(it.id, $event)" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+
+            @if (itinerarioExpandido() === it.id) {
+              @if (cargandoDetalle()) {
+                <div class="detalle-loading"><span class="spinner-sm"></span></div>
+              } @else if (itinerarioDetalle() && itinerarioDetalle()!.lugares.length > 0) {
+                <div class="itinerario-detalle">
+                  <h4>Lugares del recorrido:</h4>
+                  <ul class="lugares-lista">
+                    @for (lugar of itinerarioDetalle()!.lugares; track lugar.id) {
+                      <li>
+                        <span class="lugar-nombre">{{ lugar.nombre }}</span>
+                        <span class="lugar-categoria">{{ lugar.categoria }}</span>
+                      </li>
+                    }
+                  </ul>
+                  <button class="btn-ver-mapa" (click)="verEnMapa(itinerarioDetalle()!, $event)">
+                    🗺️ Ver en mapa
+                  </button>
+                </div>
+              }
+            }
+          </article>
+        }
+      }
+    </div>
+  }
+
+  <!-- ======================== CONFIGURACIÓN ======================== -->
+  @if (seccion() === 'configuracion') {
+    <div class="panel-header">
+      <h2 class="panel-title">Accesibilidad y apariencia</h2>
+      <span class="panel-subtitle">Personaliza tu experiencia visual</span>
+    </div>
+    <div class="panel-body">
+      <div class="config-section-label">Apariencia</div>
+      <div class="btn-config">
+        <span class="material-icons btn-config-icon">dark_mode</span>
+        <span>Modo oscuro</span>
+        <label class="toggle-switch" style="margin-left:auto">
+          <input type="checkbox" [checked]="modoOscuro" (change)="toggleModoOscuro()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="config-section-label">Accesibilidad</div>
+      <div class="btn-config">
+        <span class="material-icons btn-config-icon">contrast</span>
+        <span>Alto contraste</span>
+        <label class="toggle-switch" style="margin-left:auto">
+          <input type="checkbox" [checked]="altoContraste" (change)="toggleAltoContraste()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  }
+
 </div>
