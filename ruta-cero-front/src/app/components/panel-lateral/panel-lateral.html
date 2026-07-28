@@ -15,7 +15,7 @@
         </div>
       } @else {
         @for (lugar of lugaresRecomendados().length > 0 ? lugaresRecomendados() : usarDefaultLugares(); track lugar.id ?? $index) {
-          <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
+          <article class="place-card" (click)="enfocarEnMapa(lugar)" role="button" tabindex="0">
             <div class="card-image"
                  [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
                  [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">

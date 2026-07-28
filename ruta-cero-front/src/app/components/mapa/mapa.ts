@@ -171,9 +171,10 @@ export class Mapa implements OnInit {
       const group = L.featureGroup(nuevosMarcadores);
       this.map.fitBounds(group.getBounds().pad(0.2), { animate: true, duration: 1 });
 
-      // Si es un solo lugar, abrir su popup automáticamente
       if (nuevosMarcadores.length === 1) {
-        nuevosMarcadores[0].openPopup();
+        const marker = nuevosMarcadores[0];
+        this.map.flyTo(marker.getLatLng(), 16, { animate: true, duration: 1.5 });
+        marker.openPopup();
       }
     });
   }

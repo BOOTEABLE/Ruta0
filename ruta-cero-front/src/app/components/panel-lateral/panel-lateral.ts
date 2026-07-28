@@ -343,6 +343,13 @@ export class PanelLateral implements OnInit {
     }
   }
 
+  enfocarEnMapa(lugar: Lugar) {
+    if (lugar) {
+      this.store.lugaresRecomendados.set([lugar]);
+      this.store.seccionSidebar.set('mapa');
+    }
+  }
+
   verLugarEnMapa(lugar: any, event: Event) {
     event.stopPropagation();
     this.centrarMapa(lugar);
