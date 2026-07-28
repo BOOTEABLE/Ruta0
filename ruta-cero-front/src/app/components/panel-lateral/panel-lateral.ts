@@ -1,11 +1,13 @@
 import { Component, inject, OnInit, ElementRef, ViewChild, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { Store, Lugar } from '../../services/store';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { PerfilService, Itinerario, ItinerarioConLugares } from '../../services/perfil.service';
-import { AdminService, Destacado } from '../../services/admin.service';
+import { Destacado } from '../../services/admin.service';
+import { FavoritosService } from '../../services/favoritos.service';
 
 @Component({
   selector: 'app-panel-lateral',
@@ -20,7 +22,7 @@ export class PanelLateral implements OnInit {
   public auth = inject(AuthService);
   private perfil = inject(PerfilService);
   private router = inject(Router);
-  private admin = inject(AdminService);
+  private favoritosSvc = inject(FavoritosService);
 
   @ViewChild('messagesContainer') messagesContainer?: ElementRef;
 
@@ -34,8 +36,8 @@ export class PanelLateral implements OnInit {
   seccion = this.store.seccionSidebar;
   favoritos = signal<Destacado[]>([]);
   itinerarios = signal<Itinerario[]>([]);
-  cargandoFavoritos = false;
-  cargandoItinerarios = false;
+  cargandoFavoritos = signal(false);
+  cargandoItinerarios = signal(false);
   itinerarioExpandido = signal<number | null>(null);
   itinerarioDetalle = signal<ItinerarioConLugares | null>(null);
   cargandoDetalle = signal(false);
@@ -44,7 +46,8 @@ export class PanelLateral implements OnInit {
     effect(() => {
       const sec = this.seccion();
       if (sec === 'favoritos') this.cargarFavoritos();
-      else if (sec === 'historial' || sec === 'rutas') this.cargarItinerarios();
+      else if (sec === 'rutas') this.cargarItinerarios();
+      else if (sec === 'historial') this.cargarHistorial();
       else if (sec === 'chat') setTimeout(() => this.scrollAlFinal(), 100);
     });
   }
@@ -202,27 +205,48 @@ export class PanelLateral implements OnInit {
     this.auth.logout();
   }
 
+  private _cargandoFavoritos = false;
+
   private async cargarFavoritos() {
-    this.cargandoFavoritos = true;
+    if (this._cargandoFavoritos) return;
+    this._cargandoFavoritos = true;
+    this.cargandoFavoritos.set(true);
     try {
-      const res = await this.admin.getMisDestacados().toPromise();
+      const res = await firstValueFrom(this.favoritosSvc.getMisDestacados());
       this.favoritos.set(res?.destacados || []);
     } catch {
       this.favoritos.set([]);
     } finally {
-      this.cargandoFavoritos = false;
+      this.cargandoFavoritos.set(false);
+      this._cargandoFavoritos = false;
     }
   }
 
+  private _cargandoItinerarios = false;
+
+  historialMensajes = signal<{ texto: string; fecha: Date }[]>([]);
+
+  private async cargarHistorial() {
+    const mensajes = this.historial()
+      .filter(m => m.emisor === 'usuario')
+      .slice(-10)
+      .reverse()
+      .map(m => ({ texto: m.texto, fecha: new Date() }));
+    this.historialMensajes.set(mensajes);
+  }
+
   private async cargarItinerarios() {
-    this.cargandoItinerarios = true;
+    if (this._cargandoItinerarios) return;
+    this._cargandoItinerarios = true;
+    this.cargandoItinerarios.set(true);
     try {
-      const res = await this.perfil.listarItinerarios().toPromise();
+      const res = await firstValueFrom(this.perfil.listarItinerarios());
       this.itinerarios.set(res?.itinerarios || []);
     } catch {
       this.itinerarios.set([]);
     } finally {
-      this.cargandoItinerarios = false;
+      this.cargandoItinerarios.set(false);
+      this._cargandoItinerarios = false;
     }
   }
 
@@ -233,11 +257,13 @@ export class PanelLateral implements OnInit {
       return;
     }
 
+    this.itinerarioDetalle.set(null);
+    this.itinerarioExpandido.set(it.id);
     this.cargandoDetalle.set(true);
+
     this.perfil.obtenerItinerario(it.id).subscribe({
       next: (res) => {
         this.itinerarioDetalle.set(res.itinerario);
-        this.itinerarioExpandido.set(it.id);
         this.cargandoDetalle.set(false);
       },
       error: () => {
@@ -249,8 +275,8 @@ export class PanelLateral implements OnInit {
   verEnMapa(itinerario: ItinerarioConLugares, event: Event) {
     event.stopPropagation();
     if (itinerario.lugares && itinerario.lugares.length > 0) {
-      sessionStorage.setItem('itinerarioActivo', JSON.stringify(itinerario));
-      this.router.navigate(['/']);
+      this.store.lugaresRecomendados.set(itinerario.lugares as any);
+      this.store.seccionSidebar.set('mapa');
     }
   }
 
@@ -274,7 +300,7 @@ export class PanelLateral implements OnInit {
     event.stopPropagation();
     if (!confirm('¿Eliminar este lugar de tus destacados?')) return;
 
-    this.admin.deleteDestacado(id).subscribe({
+    this.favoritosSvc.deleteDestacado(id).subscribe({
       next: () => {
         this.favoritos.update(list => list.filter(item => item.id !== id));
       },
@@ -310,12 +336,17 @@ export class PanelLateral implements OnInit {
     return this.lugaresDefault;
   }
 
-  centrarMapa(lugar: Lugar | null) {
+  centrarMapa(lugar: any) {
     if (lugar) {
-        this.store.lugarSeleccionado.set(lugar);
-        this.store.vistaActual.set('descubrir');
+      this.store.lugaresRecomendados.set([lugar]);
+      this.store.seccionSidebar.set('mapa');
     }
-}
+  }
+
+  verLugarEnMapa(lugar: any, event: Event) {
+    event.stopPropagation();
+    this.centrarMapa(lugar);
+  }
   getCategoryGradient(categoria?: string): string {
     return this.categoryGradients[categoria || ''] || 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #5eead4 100%)';
   }
@@ -345,6 +376,7 @@ export class PanelLateral implements OnInit {
   private enviarTextoDirecto(texto: string) {
     this.historial.update(h => [...h, { emisor: 'usuario', texto }]);
     this.procesandoMensaje = true;
+    this.historial.update(h => [...h, { emisor: 'bot', texto: '', pensando: true }]);
     this.llamarBackend(texto, this.miLatitud, this.miLongitud);
   }
 
@@ -354,24 +386,55 @@ export class PanelLateral implements OnInit {
     this.enviarTextoDirecto(texto.trim());
   }
 
+  private extraerLugaresDelTexto(texto: string): any[] {
+    const lines = texto.split('\n');
+    const nombresExtraidos: string[] = [];
+    const regex = /^\d+[\.\)]\s+(.+?)(?:\s*[-–—]\s*|$)/;
+    for (const line of lines) {
+      const match = line.trim().match(regex);
+      if (match) {
+        nombresExtraidos.push(match[1].trim());
+      }
+    }
+    if (nombresExtraidos.length === 0) return [];
+
+    const lowerNames = nombresExtraidos.map(n => n.toLowerCase());
+    return this.lugaresDefault.filter(d =>
+      lowerNames.some(n => d.nombre.toLowerCase().includes(n) || n.includes(d.nombre.toLowerCase()))
+    );
+  }
+
   private llamarBackend(texto: string, lat: number | null, lng: number | null) {
     const payload = { mensaje: texto, lat, lng, historial: this.historial() };
 
     this.api.post<any>('/api/chat', payload).subscribe({
       next: (res) => {
         const textoDelServidor = res?.respuesta || 'Recibí los datos...';
-        this.historial.update(h => [...h, { emisor: 'bot', texto: textoDelServidor }]);
 
-        if (res.lugaresFisicos && res.lugaresFisicos.length > 0) {
-          this.mostrandoDefaults.set(false);
-          const lugaresConNumeros = res.lugaresFisicos.map((lugar: any) => ({
-            ...lugar,
-            latitud: Number(lugar.latitud),
-            longitud: Number(lugar.longitud)
-          }));
-          this.store.lugaresRecomendados.set(lugaresConNumeros as any);
+        let lugares: any[] = (res.lugaresFisicos || []);
+        if (lugares.length === 0) {
+          lugares = this.extraerLugaresDelTexto(textoDelServidor);
+        }
+
+        const lugaresFinales = lugares.map((l: any) => ({
+          ...l,
+          latitud: Number(l.latitud),
+          longitud: Number(l.longitud)
+        }));
+
+        this.mostrandoDefaults.set(false);
+        this.historial.update(h => {
+          const sinPensando = h.filter(m => !m.pensando);
+          return [...sinPensando, {
+            emisor: 'bot',
+            texto: textoDelServidor,
+            lugares: lugaresFinales.length > 0 ? lugaresFinales : undefined
+          }];
+        });
+
+        if (lugaresFinales.length > 0) {
+          this.store.lugaresRecomendados.set(lugaresFinales as any);
         } else {
-          this.mostrandoDefaults.set(false);
           this.store.lugaresRecomendados.set([]);
         }
 
@@ -379,7 +442,10 @@ export class PanelLateral implements OnInit {
         setTimeout(() => this.scrollAlFinal(), 50);
       },
       error: () => {
-        this.historial.update(h => [...h, { emisor: 'bot', texto: 'Upps, no pude conectar con el servidor.' }]);
+        this.historial.update(h => {
+          const sinPensando = h.filter(m => !m.pensando);
+          return [...sinPensando, { emisor: 'bot', texto: 'Upps, no pude conectar con el servidor.' }];
+        });
         this.procesandoMensaje = false;
       }
     });
@@ -403,14 +469,13 @@ export class PanelLateral implements OnInit {
     
     this.destacando = true;
     try {
-      // Verificar si ya está destacado por este usuario
-      const destacados = await this.admin.getMisDestacados().toPromise();
+      const destacados = await this.favoritosSvc.getMisDestacados().toPromise();
       if (destacados?.destacados?.some((d: any) => d.nombre === lugar.nombre)) {
         this.mostrarToast('⚠️ Este lugar ya está en tus destacados', 'info');
         return;
       }
 
-      await this.admin.createDestacado({
+      await this.favoritosSvc.createDestacado({
         nombre: lugar.nombre,
         categoria: lugar.categoria || 'General',
         descripcion: lugar.descripcion || 'Lugar destacado desde el mapa',

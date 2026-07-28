@@ -14,10 +14,11 @@ export interface Lugar {
   source?: string;
 }
 
-// 1. NUEVO: Agregamos la estructura para los mensajes
 export interface Mensaje {
   emisor: 'usuario' | 'bot';
   texto: string;
+  lugares?: any[];
+  pensando?: boolean;
 }
 
 @Injectable({

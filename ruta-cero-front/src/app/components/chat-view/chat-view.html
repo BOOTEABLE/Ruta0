@@ -6,16 +6,47 @@
           @if (msg.emisor === 'bot') {
             <span class="chat-emoji">🤖</span>
           }
-          <div [innerHTML]="formatearMensaje(msg.texto)"></div>
+          @if (msg.pensando) {
+            <div class="thinking-indicator">
+              <span class="thinking-text">El asistente está pensando</span>
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+          } @else {
+            <div [innerHTML]="formatearMensaje(msg.texto)"></div>
+          }
         </div>
-      </div>
-    }
-    @if (procesandoMensaje) {
-      <div class="chat-msg">
-        <div class="chat-bubble bot typing">
-          <span class="chat-emoji">🤖</span>
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        </div>
+        @if (!msg.pensando && msg.emisor === 'bot' && msg.lugares && msg.lugares.length > 0) {
+          <div class="chat-inline-cards">
+            @for (lugar of msg.lugares; track $index) {
+              <article class="place-card" (click)="seleccionarLugar(lugar)" role="button" tabindex="0">
+                <div class="card-image"
+                     [style.background-image]="lugar.photoUrl ? 'url(' + lugar.photoUrl + ')' : 'none'"
+                     [style.background]="lugar.photoUrl ? 'none' : getCategoryGradient(lugar.categoria)">
+                  <div class="card-image-overlay"></div>
+                  <span class="card-category-badge">{{ lugar.categoria }}</span>
+                  <span class="card-icon">{{ getCategoryIcon(lugar.categoria) }}</span>
+                  <button class="btn-fav" (click)="destacarLugar(lugar); $event.stopPropagation()" title="Destacar lugar">
+                    <span class="material-icons">favorite_border</span>
+                  </button>
+                  <button class="btn-ver-mapa-icon" (click)="verLugarEnMapa(lugar, $event)" title="Ver en mapa">
+                    <span class="material-icons">map</span>
+                  </button>
+                </div>
+                <div class="card-body">
+                  <h3 class="card-title">{{ lugar.nombre }}</h3>
+                  <p class="card-desc">{{ truncarDescripcion(lugar.descripcion, 80) }}</p>
+                  <div class="card-footer">
+                    <span class="card-location">
+                      <span class="material-icons location-icon">location_on</span>
+                      Quito
+                    </span>
+                    <span class="card-price">{{ lugar.precio || '$$' }}</span>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
       </div>
     }
   </div>

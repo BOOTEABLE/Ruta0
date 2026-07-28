@@ -1,8 +1,17 @@
+/* ===== HOST (fills .floating-panel flex container) ===== */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 /* ===== CONTENEDOR PRINCIPAL ===== */
 .panel-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   background: transparent;
 }
 
@@ -146,6 +155,67 @@
   color: #fff;
 }
 
+.btn-fav {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-fav:hover {
+  transform: scale(1.12);
+  background: #ffffff;
+}
+
+.btn-fav .material-icons {
+  font-size: 1.125rem;
+  color: #dc2626;
+  transition: all 0.2s;
+}
+
+.btn-fav .material-icons.faved {
+  font-variation-settings: 'FILL' 1;
+}
+
+.btn-ver-mapa-icon {
+  position: absolute;
+  bottom: 10px;
+  right: 48px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-ver-mapa-icon:hover {
+  transform: scale(1.12);
+  background: #ffffff;
+}
+
+.btn-ver-mapa-icon .material-icons {
+  font-size: 1.125rem;
+  color: #2563eb;
+}
+
 /* Cuerpo */
 .card-body {
   padding: 12px 14px 14px;
@@ -202,6 +272,10 @@
 .panel-footer {
   padding: 12px 20px 16px;
   flex-shrink: 0;
+}
+
+.panel-footer:empty {
+  display: none;
 }
 
 .btn-rutas {
@@ -270,6 +344,36 @@
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.destacado-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-ver-mapa-sm {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  opacity: 0.5;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.btn-ver-mapa-sm:hover {
+  opacity: 1;
+  background: #eff6ff;
+}
+
+.btn-ver-mapa-sm .material-icons {
+  font-size: 1.125rem;
+  color: #2563eb;
 }
 
 .destacado-fecha {
@@ -591,6 +695,40 @@
 
 .config-section-label:first-of-type {
   margin-top: 0;
+}
+
+/* ─── BOTÓN GUARDAR ITINERARIO ──────────────────── */
+.btn-guardar-itinerario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-lg, 16px);
+  background: var(--accent-gradient, linear-gradient(135deg, #2e7d32 0%, #43a047 100%));
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
+}
+
+.btn-guardar-itinerario:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(46, 125, 50, 0.4);
+}
+
+.btn-guardar-itinerario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-guardar-itinerario .material-icons {
+  font-size: 1.25rem;
 }
 
 /* ─── BOTONES DE CONFIGURACIÓN ─────────────────── */

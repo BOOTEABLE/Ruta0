@@ -114,17 +114,20 @@ export class Mapa implements OnInit {
     }, 400);
   }
 
+  private markersCache: any[] = [];
+
   private actualizarMarcadores(lugares: any[]): void {
     if (!this.map || !this.markersLayer) return;
 
-    import('leaflet').then((L) => {
-      // 🧹 LIMPIEZA INICIAL: Borra los pines del turno anterior
-      this.markersLayer.clearLayers();
-      
-      // Si el arreglo viene vacío (porque Gemini recomendó lugares externos), se detiene aquí.
-      if (lugares.length === 0) return;
+    // 🧹 LIMPIEZA SÍNCRONA: elimina pines viejos antes de cualquier async
+    this.markersLayer.clearLayers();
+    this.markersCache = [];
 
-      // Si sí hay lugares locales, procedemos a dibujar los nuevos
+    if (lugares.length === 0) return;
+
+    import('leaflet').then((L) => {
+      const nuevosMarcadores: any[] = [];
+
       lugares.forEach(lugar => {
         const lat = Number(lugar.latitud);
         const lng = Number(lugar.longitud);
@@ -134,11 +137,18 @@ export class Mapa implements OnInit {
           return;
         }
 
+        const desc = lugar.descripcion
+          ? lugar.descripcion.length > 100
+            ? lugar.descripcion.slice(0, 100) + '...'
+            : lugar.descripcion
+          : '';
+
         const popupHTML = `
-          <div style="font-family: Arial, sans-serif; min-width: 150px;">
+          <div style="font-family: Arial, sans-serif; min-width: 180px;">
             <strong style="color: #1976d2; font-size: 1.1em;">${lugar.nombre}</strong><br>
-            <span style="color: #666; font-size: 0.9em;">📍 ${lugar.categoria}</span><br>
-            ${lugar.horario ? `<hr style="margin: 5px 0;"><span style="font-size: 0.85em;">🕒 <b>Horario:</b> ${lugar.horario}</span>` : ''}
+            <span style="color: #666; font-size: 0.9em;">📍 ${lugar.categoria}</span>
+            ${desc ? `<p style="margin:4px 0 0;font-size:0.85em;color:#444;line-height:1.4;">${desc}</p>` : ''}
+            ${lugar.horario ? `<hr style="margin:5px 0;"><span style="font-size:0.85em;">🕒 <b>Horario:</b> ${lugar.horario}</span>` : ''}
           </div>
         `;
 
@@ -151,11 +161,20 @@ export class Mapa implements OnInit {
         });
 
         this.markersLayer.addLayer(marker);
+        nuevosMarcadores.push(marker);
+        this.markersCache.push(marker);
       });
 
+      if (nuevosMarcadores.length === 0) return;
+
       this.map.invalidateSize();
-      const group = L.featureGroup(this.markersLayer.getLayers() as any);
+      const group = L.featureGroup(nuevosMarcadores);
       this.map.fitBounds(group.getBounds().pad(0.2), { animate: true, duration: 1 });
+
+      // Si es un solo lugar, abrir su popup automáticamente
+      if (nuevosMarcadores.length === 1) {
+        nuevosMarcadores[0].openPopup();
+      }
     });
   }
 }
