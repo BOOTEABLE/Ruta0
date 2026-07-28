@@ -8,11 +8,10 @@ const { Pool } = pg;
 export const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false // Necesario para conexiones seguras en la nube
+        rejectUnauthorized: false
     },
-    max: 20, // Máximo 20 conexiones al mismo tiempo
-    idleTimeoutMillis: 30000 // Cierra conexiones inactivas después de 30 seg
+    max: 20,
+    idleTimeoutMillis: 30000
 });
 
-// Este console.log solo debería aparecer UNA VEZ cuando el servidor arranca
 console.log("📦 Conectado a la Base de Datos PostgreSQL");
