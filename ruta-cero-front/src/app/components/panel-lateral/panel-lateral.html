@@ -159,7 +159,7 @@
                   <button class="btn-ver-mapa-sm" (click)="verLugarEnMapa(lugar, $event)" title="Ver en mapa">
                     <span class="material-icons">map</span>
                   </button>
-                  <button class="btn-delete" (click)="eliminarDestacado(lugar.id, $event)" title="Eliminar">🗑️</button>
+                  <button class="btn-delete" (click)="confirmarEliminar({ tipo: 'favorito', id: lugar.id }, $event)" title="Eliminar">🗑️</button>
                 </div>
               </div>
             </div>
@@ -224,7 +224,7 @@
                 <span class="itinerario-meta">{{ it.lugares?.length || it.lugaresIds?.length || 0 }} lugares · {{ formatearFecha(it.createdAt) }}</span>
               </div>
               <div class="itinerario-actions">
-                <button class="btn-delete" (click)="confirmarEliminar(it.id, $event)" title="Eliminar">🗑️</button>
+                <button class="btn-delete" (click)="confirmarEliminar({ tipo: 'ruta', id: it.id }, $event)" title="Eliminar">🗑️</button>
               </div>
             </div>
 
@@ -291,12 +291,18 @@
   }
 
   <!-- ======================== MODAL ELIMINAR ======================== -->
-  @if (itinerarioAEliminar() !== null) {
+  @if (elementoAEliminar() !== null) {
     <div class="modal-overlay" (click)="cancelarEliminar()">
       <div class="modal-box" (click)="$event.stopPropagation()">
-        <span class="modal-icon material-icons">delete_forever</span>
-        <h3 class="modal-title">Eliminar ruta</h3>
-        <p class="modal-text">¿Estás seguro de que deseas eliminar este itinerario? Esta acción no se puede deshacer.</p>
+        @if (elementoAEliminar()!.tipo === 'ruta') {
+          <span class="modal-icon material-icons">delete_forever</span>
+          <h3 class="modal-title">Eliminar ruta</h3>
+          <p class="modal-text">¿Estás seguro de que deseas eliminar este itinerario? Esta acción no se puede deshacer.</p>
+        } @else {
+          <span class="modal-icon material-icons">heart_broken</span>
+          <h3 class="modal-title">Eliminar favorito</h3>
+          <p class="modal-text">¿Estás seguro de que deseas eliminar este lugar de tus favoritos?</p>
+        }
         <div class="modal-actions">
           <button class="modal-btn modal-btn-cancel" (click)="cancelarEliminar()">Cancelar</button>
           <button class="modal-btn modal-btn-delete" (click)="ejecutarEliminar()">Eliminar</button>

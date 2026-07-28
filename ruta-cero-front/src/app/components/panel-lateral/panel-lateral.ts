@@ -280,22 +280,26 @@ export class PanelLateral implements OnInit {
     }
   }
 
-  itinerarioAEliminar = signal<number | null>(null);
+  elementoAEliminar = signal<{ tipo: 'ruta' | 'favorito'; id: number } | null>(null);
 
-  confirmarEliminar(id: number, event: Event) {
+  confirmarEliminar(data: { tipo: 'ruta' | 'favorito'; id: number }, event: Event) {
     event.stopPropagation();
-    this.itinerarioAEliminar.set(id);
+    this.elementoAEliminar.set(data);
   }
 
   cancelarEliminar() {
-    this.itinerarioAEliminar.set(null);
+    this.elementoAEliminar.set(null);
   }
 
   ejecutarEliminar() {
-    const id = this.itinerarioAEliminar();
-    if (id === null) return;
-    this.itinerarioAEliminar.set(null);
-    this.eliminarItinerario(id);
+    const data = this.elementoAEliminar();
+    if (data === null) return;
+    this.elementoAEliminar.set(null);
+    if (data.tipo === 'ruta') {
+      this.eliminarItinerario(data.id);
+    } else {
+      this.eliminarFavorito(data.id);
+    }
   }
 
   private eliminarItinerario(id: number) {
@@ -311,10 +315,7 @@ export class PanelLateral implements OnInit {
     });
   }
 
-  eliminarDestacado(id: number, event: Event) {
-    event.stopPropagation();
-    if (!confirm('¿Eliminar este lugar de tus destacados?')) return;
-
+  private eliminarFavorito(id: number) {
     this.favoritosSvc.deleteDestacado(id).subscribe({
       next: () => {
         this.favoritos.update(list => list.filter(item => item.id !== id));
